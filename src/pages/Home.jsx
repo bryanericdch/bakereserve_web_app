@@ -1,15 +1,29 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import HomeHeader from "../components/HomeHeader";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
-  const [filter, setFilter] = useState("all"); // 'all', 'bakery', 'cake'
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Fetch Products
+  // Feedback state
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  // Get Token helper
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+  const config = {
+    headers: { Authorization: `Bearer ${userInfo.token}` },
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -24,7 +38,37 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  // Filter Logic
+  const addToCart = async (product) => {
+    if (!userInfo.token) {
+      setAlert({
+        open: true,
+        message: "Please login to order",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API_URL}/cart`,
+        {
+          productId: product._id,
+          quantity: 1,
+          // Optional: customization if needed later
+        },
+        config,
+      );
+
+      setAlert({ open: true, message: "Added to cart!", severity: "success" });
+    } catch {
+      setAlert({
+        open: true,
+        message: "Failed to add to cart",
+        severity: "error",
+      });
+    }
+  };
+
   const filteredProducts = products.filter((p) =>
     filter === "all" ? true : p.category === filter,
   );
@@ -33,30 +77,38 @@ const Home = () => {
     <div className="min-h-screen bg-[#F9F9F9]">
       <HomeHeader />
 
-      {/* Hero Title */}
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={2000}
+        onClose={() => setAlert({ ...alert, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={alert.severity} variant="filled">
+          {alert.message}
+        </Alert>
+      </Snackbar>
+
       <div className="py-12 text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-red-500">
           BakeReserve
         </h1>
       </div>
 
-      {/* Category Pills */}
       <div className="flex justify-center mb-10 px-4">
         <div className="bg-gray-200 p-1 rounded-full inline-flex">
           {["All products", "Breads", "Cakes"].map((label) => {
-            // Map labels to backend categories
             let value = "all";
             if (label === "Breads") value = "bakery";
             if (label === "Cakes") value = "cake";
 
-            const isActive = filter === value;
             return (
               <button
                 key={label}
                 onClick={() => setFilter(value)}
                 className={`
                   px-6 py-2 rounded-full text-sm font-semibold transition-all
-                  ${isActive ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}
+                  ${filter === value ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}
                 `}
               >
                 {label}
@@ -66,7 +118,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Product Grid */}
       <div className="max-w-7xl mx-auto px-6 pb-20">
         {loading ? (
           <p className="text-center text-gray-500">Loading products...</p>
@@ -77,7 +128,6 @@ const Home = () => {
                 key={product._id}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
-                {/* Image Area */}
                 <div className="h-48 w-full bg-gray-100 relative">
                   <img
                     src={product.image}
@@ -86,7 +136,6 @@ const Home = () => {
                   />
                 </div>
 
-                {/* Content Area */}
                 <div className="p-4 flex flex-col flex-1">
                   <h3 className="font-bold text-lg text-gray-800 mb-1">
                     {product.name}
@@ -102,7 +151,10 @@ const Home = () => {
                     <span className="text-xs text-gray-400">Available</span>
                   </div>
 
-                  <button className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm transition-colors">
+                  <button
+                    onClick={() => addToCart(product)}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm transition-colors active:scale-95 transform"
+                  >
                     Add to Cart
                   </button>
                 </div>

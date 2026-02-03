@@ -8,7 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
-// IMPORTANT: Change this if your backend port is different
+// Ensure this matches your live backend or localhost
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
 
 const countryCodes = [
@@ -38,34 +38,53 @@ const Auth = () => {
   };
 
   const validateForm = () => {
-    if (isLogin) return true; // Login usually relies on backend error response
-
-    // 1. Name Length > 2
-    if (formData.firstName.trim().length <= 2) {
-      setError("First Name must be more than 2 characters.");
-      return false;
-    }
-    if (formData.lastName.trim().length <= 2) {
-      setError("Last Name must be more than 2 characters.");
-      return false;
-    }
-
-    // 2. Email Format
+    // --- COMMON CHECKS ---
+    // 1. Email Format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError("Please enter a valid email address.");
       return false;
     }
 
-    // 3. Password > 6 chars AND Alphanumeric
-    if (formData.password.length <= 6) {
-      setError("Password must be more than 6 characters.");
+    // 2. Password Not Empty
+    if (!formData.password) {
+      setError("Please enter your password.");
       return false;
     }
-    const alphanumericRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])/;
-    if (!alphanumericRegex.test(formData.password)) {
-      setError("Password must contain both letters and numbers.");
-      return false;
+
+    // --- STRICT CHECKS FOR SIGNUP ONLY ---
+    if (!isLogin) {
+      // Name Length (> 1 character means length >= 2)
+      if (formData.firstName.trim().length < 2) {
+        setError("First Name must be at least 2 characters.");
+        return false;
+      }
+      if (formData.lastName.trim().length < 2) {
+        setError("Last Name must be at least 2 characters.");
+        return false;
+      }
+
+      // Contact Number (Only Numbers)
+      const numberRegex = /^\d+$/;
+      if (!numberRegex.test(formData.contactNumber)) {
+        setError("Contact number should only contain numbers.");
+        return false;
+      }
+
+      // Password Complexity (>6 chars, alphanumeric, special char)
+      if (formData.password.length <= 6) {
+        setError("Password must be more than 6 characters.");
+        return false;
+      }
+
+      // Regex: Letters + Numbers + Special Characters
+      const strictPasswordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/;
+      if (!strictPasswordRegex.test(formData.password)) {
+        setError(
+          "Password must contain letters, numbers, and special characters (!@#$%^&*).",
+        );
+        return false;
+      }
     }
 
     return true;
@@ -90,13 +109,12 @@ const Auth = () => {
         localStorage.setItem("userInfo", JSON.stringify(data));
 
         if (data.role === "admin") {
-          alert("Admin Login Successful"); // Replace with admin route later
+          alert("Admin Login Successful");
         } else {
           navigate("/home");
         }
       } else {
         // --- REGISTER ---
-        // Combine country code + number
         const fullContactNumber = `${countryCode}${formData.contactNumber}`;
 
         const { data } = await axios.post(`${API_URL}/register`, {
@@ -112,7 +130,10 @@ const Auth = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Something went wrong.");
+      // Backend now sends "Email not found" or "Password is incorrect"
+      setError(
+        err.response?.data?.message || "Server error. Please try again.",
+      );
     } finally {
       SFLoading(false);
     }
@@ -210,7 +231,7 @@ const Auth = () => {
               fullWidth
               required
               onChange={handleChange}
-              helperText={!isLogin ? "Must be >6 chars & alphanumeric" : ""}
+              helperText={!isLogin ? "Must include special char (!@#$)" : ""}
             />
 
             {!isLogin && (
@@ -235,6 +256,7 @@ const Auth = () => {
                   fullWidth
                   required
                   onChange={handleChange}
+                  placeholder="9123456789"
                 />
               </div>
             )}

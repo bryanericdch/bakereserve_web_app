@@ -1,22 +1,16 @@
 import { Routes, Route } from "react-router-dom";
-// Public
 import Landing from "../pages/Landing";
-import Auth from "../pages/Auth";
-import Products from "../pages/Products";
-
-// Customer
 import Home from "../pages/Home";
+import Auth from "../pages/Auth";
+import Cart from "../pages/Cart"; // Import Cart
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public */}
       <Route path="/" element={<Landing />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/products" element={<Products />} />
-
-      {/* Customer */}
       <Route path="/home" element={<Home />} />
+      <Route path="/cart" element={<Cart />} /> {/* Add Route */}
     </Routes>
   );
 };
