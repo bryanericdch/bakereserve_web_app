@@ -7,6 +7,8 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import IconButton from "@mui/material/IconButton"; // Import IconButton
+import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Import Arrow Icon
 
 // Ensure this matches your live backend or localhost
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
@@ -109,9 +111,9 @@ const Auth = () => {
         localStorage.setItem("userInfo", JSON.stringify(data));
 
         if (data.role === "admin") {
-          alert("Admin Login Successful");
+          navigate("/admin/dashboard"); // <--- Redirect Admin
         } else {
-          navigate("/home");
+          navigate("/home"); // <--- Redirect Customer
         }
       } else {
         // --- REGISTER ---
@@ -141,6 +143,19 @@ const Auth = () => {
 
   return (
     <div className="flex w-full h-screen bg-[#FFFBF7] items-center justify-center p-4">
+      {/* --- NEW BACK BUTTON --- */}
+      <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+        <IconButton
+          onClick={() => navigate("/")}
+          sx={{
+            backgroundColor: "white",
+            boxShadow: 1,
+            "&:hover": { backgroundColor: "#f5f5f5" },
+          }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+      </div>
       <div className="flex flex-col md:flex-row w-full max-w-5xl items-center justify-between gap-10">
         {/* Branding */}
         <div className="text-center md:text-left md:w-1/2 space-y-4">
