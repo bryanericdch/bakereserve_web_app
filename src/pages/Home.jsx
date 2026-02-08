@@ -3,7 +3,10 @@ import axios from "axios";
 import HomeHeader from "../components/HomeHeader";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
+import CircularProgress from "@mui/material/CircularProgress"; // Added for loading state
 
+// USE THIS FOR LOCAL TESTING (Matches your fixed backend):
+//const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Home = () => {
@@ -18,7 +21,6 @@ const Home = () => {
     severity: "success",
   });
 
-  // Get Token helper
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = {
     headers: { Authorization: `Bearer ${userInfo.token}` },
@@ -54,7 +56,6 @@ const Home = () => {
         {
           productId: product._id,
           quantity: 1,
-          // Optional: customization if needed later
         },
         config,
       );
@@ -69,6 +70,7 @@ const Home = () => {
     }
   };
 
+  // Simple Filter Logic (All / Bakery / Cake)
   const filteredProducts = products.filter((p) =>
     filter === "all" ? true : p.category === filter,
   );
@@ -77,7 +79,6 @@ const Home = () => {
     <div className="min-h-screen bg-[#F9F9F9]">
       <HomeHeader />
 
-      {/* Snackbar for Notifications */}
       <Snackbar
         open={alert.open}
         autoHideDuration={2000}
@@ -95,12 +96,13 @@ const Home = () => {
         </h1>
       </div>
 
+      {/* --- STANDARD TABS --- */}
       <div className="flex justify-center mb-10 px-4">
         <div className="bg-gray-200 p-1 rounded-full inline-flex">
           {["All products", "Breads", "Cakes"].map((label) => {
             let value = "all";
-            if (label === "Breads") value = "bakery";
-            if (label === "Cakes") value = "cake";
+            if (label === "Breads") value = "bakery"; // Matches DB 'bakery'
+            if (label === "Cakes") value = "cake"; // Matches DB 'cake'
 
             return (
               <button
@@ -120,7 +122,9 @@ const Home = () => {
 
       <div className="max-w-7xl mx-auto px-6 pb-20">
         {loading ? (
-          <p className="text-center text-gray-500">Loading products...</p>
+          <div className="flex justify-center mt-10">
+            <CircularProgress />
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
@@ -128,12 +132,20 @@ const Home = () => {
                 key={product._id}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
+                {/* Image Container with Stock Overlay */}
                 <div className="h-48 w-full bg-gray-100 relative">
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
+                  {product.countInStock === 0 && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="text-white font-bold border-2 border-white px-3 py-1 uppercase tracking-wider">
+                        Sold Out
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 flex flex-col flex-1">
@@ -148,14 +160,24 @@ const Home = () => {
                     <span className="text-red-500 font-bold text-lg">
                       ₱ {product.price}
                     </span>
-                    <span className="text-xs text-gray-400">Available</span>
+                    <span
+                      className={`text-xs ${product.countInStock > 0 ? "text-green-600" : "text-red-500"}`}
+                    >
+                      {product.countInStock > 0 ? "Available" : "Out of Stock"}
+                    </span>
                   </div>
 
                   <button
                     onClick={() => addToCart(product)}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm transition-colors active:scale-95 transform"
+                    disabled={product.countInStock === 0} // Disable if no stock
+                    className={`w-full font-semibold py-2 rounded-lg text-sm transition-colors active:scale-95 transform
+                        ${
+                          product.countInStock > 0
+                            ? "bg-red-500 hover:bg-red-600 text-white"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
                   >
-                    Add to Cart
+                    {product.countInStock > 0 ? "Add to Cart" : "Out of Stock"}
                   </button>
                 </div>
               </div>

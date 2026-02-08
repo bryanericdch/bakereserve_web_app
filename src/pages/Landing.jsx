@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@mui/material/Button";
 import LandingHeader from "../components/LandingHeader";
@@ -5,6 +6,17 @@ import landingImage from "../assets/img/landing1.png";
 
 export default function Landing() {
   const navigate = useNavigate();
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+
+    if (userInfo) {
+      if (userInfo.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/home");
+      }
+    }
+  }, [navigate]);
 
   return (
     <div className="relative w-full min-h-screen bg-gray-50">

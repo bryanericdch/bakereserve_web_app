@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "@mui/material/Button";
@@ -24,6 +24,17 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, SFLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+    if (userInfo) {
+      if (userInfo.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/home");
+      }
+    }
+  }, [navigate]);
 
   // Form Data
   const [countryCode, setCountryCode] = useState("+63");
