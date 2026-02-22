@@ -1,30 +1,37 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import HomeHeader from "../components/HomeHeader";
+import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
-import CircularProgress from "@mui/material/CircularProgress"; // Added for loading state
+import ProductDetailModal from "../components/ProductDetailModal";
+import QuickAddModal from "../components/QuickAddModal";
 
-// USE THIS FOR LOCAL TESTING (Matches your fixed backend):
-//const API_URL = "http://localhost:5000/api";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import EditIcon from "@mui/icons-material/Edit";
+
+// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Feedback state
+  // Modals
+  const [detailProduct, setDetailProduct] = useState(null); // For Cakes Detail View
+  const [quickAddProduct, setQuickAddProduct] = useState(null); // For Bakery Quick Add
+
   const [alert, setAlert] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-  const config = {
-    headers: { Authorization: `Bearer ${userInfo.token}` },
-  };
+  const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,7 +47,12 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  const addToCart = async (product) => {
+  // --- ACTIONS ---
+  const handlePersonalize = (product) => {
+    navigate(`/product/${product._id}`);
+  };
+
+  const handleQuickAdd = async (product, qty) => {
     if (!userInfo.token) {
       setAlert({
         open: true,
@@ -49,18 +61,17 @@ const Home = () => {
       });
       return;
     }
-
     try {
       await axios.post(
         `${API_URL}/cart`,
-        {
-          productId: product._id,
-          quantity: 1,
-        },
+        { productId: product._id, quantity: qty },
         config,
       );
-
-      setAlert({ open: true, message: "Added to cart!", severity: "success" });
+      setAlert({
+        open: true,
+        message: `Added ${qty} ${product.name} to cart!`,
+        severity: "success",
+      });
     } catch {
       setAlert({
         open: true,
@@ -70,7 +81,6 @@ const Home = () => {
     }
   };
 
-  // Simple Filter Logic (All / Bakery / Cake)
   const filteredProducts = products.filter((p) =>
     filter === "all" ? true : p.category === filter,
   );
@@ -96,22 +106,17 @@ const Home = () => {
         </h1>
       </div>
 
-      {/* --- STANDARD TABS --- */}
       <div className="flex justify-center mb-10 px-4">
         <div className="bg-gray-200 p-1 rounded-full inline-flex">
           {["All products", "Breads", "Cakes"].map((label) => {
             let value = "all";
-            if (label === "Breads") value = "bakery"; // Matches DB 'bakery'
-            if (label === "Cakes") value = "cake"; // Matches DB 'cake'
-
+            if (label === "Breads") value = "bakery";
+            if (label === "Cakes") value = "cake";
             return (
               <button
                 key={label}
                 onClick={() => setFilter(value)}
-                className={`
-                  px-6 py-2 rounded-full text-sm font-semibold transition-all
-                  ${filter === value ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}
-                `}
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${filter === value ? "bg-white shadow-sm text-black" : "text-gray-600 hover:text-black"}`}
               >
                 {label}
               </button>
@@ -125,19 +130,30 @@ const Home = () => {
           <div className="flex justify-center mt-10">
             <CircularProgress />
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <p>No products found.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <div
                 key={product._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col group"
               >
-                {/* Image Container with Stock Overlay */}
-                <div className="h-48 w-full bg-gray-100 relative">
+                {/* Image Area */}
+                <div
+                  className="h-48 w-full bg-gray-100 relative cursor-pointer"
+                  onClick={() =>
+                    product.category === "cake"
+                      ? setDetailProduct(product)
+                      : setQuickAddProduct(product)
+                  }
+                >
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   {product.countInStock === 0 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -149,13 +165,19 @@ const Home = () => {
                 </div>
 
                 <div className="p-4 flex flex-col flex-1">
-                  <h3 className="font-bold text-lg text-gray-800 mb-1">
-                    {product.name}
-                  </h3>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-bold text-lg text-gray-800 line-clamp-1">
+                      {product.name}
+                    </h3>
+                    {product.category === "cake" && (
+                      <span className="text-[10px] uppercase font-bold bg-pink-100 text-pink-600 px-2 py-0.5 rounded">
+                        Cake
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mb-2 line-clamp-2">
                     {product.description}
                   </p>
-
                   <div className="mt-auto flex items-center justify-between mb-4">
                     <span className="text-red-500 font-bold text-lg">
                       ₱ {product.price}
@@ -167,24 +189,65 @@ const Home = () => {
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => addToCart(product)}
-                    disabled={product.countInStock === 0} // Disable if no stock
-                    className={`w-full font-semibold py-2 rounded-lg text-sm transition-colors active:scale-95 transform
-                        ${
-                          product.countInStock > 0
-                            ? "bg-red-500 hover:bg-red-600 text-white"
-                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        }`}
-                  >
-                    {product.countInStock > 0 ? "Add to Cart" : "Out of Stock"}
-                  </button>
+                  {/* BUTTONS LOGIC */}
+                  <div className="flex gap-2">
+                    {product.category === "cake" ? (
+                      <>
+                        {/* CAKE: View Details & Personalize */}
+                        <button
+                          onClick={() => setDetailProduct(product)}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <VisibilityIcon fontSize="small" /> Details
+                        </button>
+                        <button
+                          onClick={() => handlePersonalize(product)}
+                          disabled={product.countInStock === 0}
+                          className={`flex-1 ${product.countInStock > 0 ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-colors`}
+                        >
+                          <EditIcon fontSize="small" /> Personalize
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* BAKERY: View Details & Quick Add */}
+                        <button
+                          onClick={() => navigate(`/product/${product._id}`)}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <VisibilityIcon fontSize="small" /> Details
+                        </button>
+                        <button
+                          onClick={() => setQuickAddProduct(product)}
+                          disabled={product.countInStock === 0}
+                          className={`flex-1 ${product.countInStock > 0 ? "bg-red-500 hover:bg-red-600 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-colors`}
+                        >
+                          <AddShoppingCartIcon fontSize="small" /> Add
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ProductDetailModal
+        open={!!detailProduct}
+        onClose={() => setDetailProduct(null)}
+        product={detailProduct}
+        onPersonalize={handlePersonalize}
+      />
+
+      <QuickAddModal
+        open={!!quickAddProduct}
+        onClose={() => setQuickAddProduct(null)}
+        product={quickAddProduct}
+        onConfirm={handleQuickAdd}
+      />
     </div>
   );
 };

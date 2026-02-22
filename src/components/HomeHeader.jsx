@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios"; // Added axios
+import axios from "axios";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -10,17 +10,18 @@ import Divider from "@mui/material/Divider";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
+import CakeIcon from "@mui/icons-material/Cake"; // Icon for the new button
 
 const HomeHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [cartCount, setCartCount] = useState(0); // State for cart number
+  const [cartCount, setCartCount] = useState(0);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+  // const API_URL = "http://localhost:5000/api";
   const API_URL = "https://bakereserve-api.onrender.com/api";
 
-  // Fetch Cart Count on mount
   useEffect(() => {
     const fetchCartCount = async () => {
       if (!userInfo.token) return;
@@ -29,7 +30,6 @@ const HomeHeader = () => {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         };
         const { data } = await axios.get(`${API_URL}/cart`, config);
-        // Sum up the quantities of all items
         const count =
           data.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
         setCartCount(count);
@@ -38,7 +38,7 @@ const HomeHeader = () => {
       }
     };
     fetchCartCount();
-  }, [location.pathname]); // Refresh when changing pages (e.g. after adding to cart)
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
@@ -47,19 +47,15 @@ const HomeHeader = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  // Drawer Content
   const DrawerList = (
     <div className="w-72 flex flex-col h-full bg-white" role="presentation">
       <div className="p-6 bg-amber-50">
-        {/* Full Name Display */}
         <h2 className="text-xl font-bold text-gray-800">
           {userInfo.firstName} {userInfo.lastName}
         </h2>
         <p className="text-sm text-gray-500">{userInfo.email}</p>
       </div>
-
       <Divider />
-
       <List className="flex-1">
         <ListItem disablePadding>
           <ListItemButton onClick={() => navigate("/profile")}>
@@ -72,9 +68,7 @@ const HomeHeader = () => {
           </ListItemButton>
         </ListItem>
       </List>
-
       <Divider />
-
       <div className="p-4">
         <button
           onClick={handleLogout}
@@ -95,7 +89,7 @@ const HomeHeader = () => {
         BakeReserve
       </h1>
 
-      <nav className="hidden md:flex gap-8 text-gray-700 font-medium">
+      <nav className="hidden md:flex gap-8 text-gray-700 font-medium items-center">
         <button
           onClick={() => navigate("/home")}
           className={`transition ${isActive("/home") ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
@@ -114,14 +108,20 @@ const HomeHeader = () => {
         >
           My Orders
         </button>
+
+        {/* --- NEW BUTTON HERE --- */}
+        <button
+          onClick={() => navigate("/create-cake")}
+          className="flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-bold hover:bg-amber-200 transition-colors"
+        >
+          <CakeIcon fontSize="small" /> Create Your Own Cake
+        </button>
       </nav>
 
       <div className="flex items-center gap-6">
         <button className="hover:text-amber-600">
           <SearchIcon />
         </button>
-
-        {/* Cart Icon with Dynamic Count */}
         <button
           className="hover:text-amber-600 relative"
           onClick={() => navigate("/cart")}
@@ -133,8 +133,6 @@ const HomeHeader = () => {
             </span>
           )}
         </button>
-
-        {/* Profile Button - Shows First Name */}
         <button
           className="flex items-center gap-2 hover:text-amber-600"
           onClick={() => setOpenDrawer(true)}

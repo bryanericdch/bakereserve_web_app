@@ -4,6 +4,8 @@ import Home from "../pages/Home";
 import Auth from "../pages/Auth";
 import Cart from "../pages/Cart";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ProductDetails from "../pages/ProductDetails";
+import CreateCake from "../pages/CreateCake";
 
 // Admin Imports
 import AdminRoute from "../components/AdminRoute";
@@ -21,6 +23,7 @@ const AppRoutes = () => {
       {/* Customer Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route
           path="/orders"
@@ -39,6 +42,8 @@ const AppRoutes = () => {
           }
         />
       </Route>
+
+      <Route path="/create-cake" element={<CreateCake />} />
 
       {/* Admin Routes */}
       <Route element={<AdminRoute />}>

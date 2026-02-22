@@ -13,7 +13,10 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SortIcon from "@mui/icons-material/Sort";
+import CakeIcon from "@mui/icons-material/Cake";
+import BakeryDiningIcon from "@mui/icons-material/BakeryDining";
 
+// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const AdminDashboard = () => {
@@ -23,9 +26,9 @@ const AdminDashboard = () => {
   // --- VIEW STATES ---
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all"); // 'all' | 'cake' | 'bakery'
   const [statsPeriod, setStatsPeriod] = useState("month");
-  const [rankSort, setRankSort] = useState("highest"); // 'highest' | 'lowest'
+  const [rankSort, setRankSort] = useState("highest");
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -45,14 +48,22 @@ const AdminDashboard = () => {
     fetchOrders();
   }, []);
 
+  // --- COUNTER LOGIC (UPDATED FOR FILTERS) ---
   const getCount = (status) => {
-    if (status === "all") return orders.length;
+    // Count only visible orders based on current typeFilter
+    const filteredByType = orders.filter((o) => {
+      if (typeFilter === "cake") return o.orderType === "cake";
+      if (typeFilter === "bakery") return o.orderType === "bakery";
+      return true;
+    });
+
+    if (status === "all") return filteredByType.length;
     if (status === "rejected_cancelled") {
-      return orders.filter((o) =>
+      return filteredByType.filter((o) =>
         ["rejected", "cancelled"].includes(o.orderStatus),
       ).length;
     }
-    return orders.filter((o) => o.orderStatus === status).length;
+    return filteredByType.filter((o) => o.orderStatus === status).length;
   };
 
   const statusTabs = [
@@ -100,10 +111,40 @@ const AdminDashboard = () => {
     },
   ];
 
-  // --- STATS LOGIC ---
+  const updateStatus = async (id, status) => {
+    const action = status === "rejected" ? "reject" : "mark as " + status;
+    if (!window.confirm(`Are you sure you want to ${action} this order?`))
+      return;
+    try {
+      await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
+      fetchOrders();
+    } catch {
+      alert("Update failed");
+    }
+  };
+
+  // --- FILTERING LOGIC (SEPARATE MANAGEMENT) ---
+  const getManageOrders = () => {
+    return orders.filter((order) => {
+      // 1. Filter by Status
+      if (statusTab === "rejected") {
+        if (!["rejected", "cancelled"].includes(order.orderStatus))
+          return false;
+      } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
+        return false;
+      }
+
+      // 2. Filter by Type (Cake vs Bakery)
+      if (typeFilter === "cake" && order.orderType !== "cake") return false;
+      if (typeFilter === "bakery" && order.orderType !== "bakery") return false;
+
+      return true;
+    });
+  };
+
+  // --- STATS LOGIC (RESTORED) ---
   const getStats = () => {
     const now = new Date();
-    // 1. Filter Orders by Time
     const filteredByTime = orders.filter((order) => {
       const d = new Date(order.createdAt);
       if (statsPeriod === "day") return d.toDateString() === now.toDateString();
@@ -116,42 +157,34 @@ const AdminDashboard = () => {
       return true;
     });
 
-    // 2. Basic Counters
     const completed = filteredByTime.filter(
       (o) => o.orderStatus === "completed",
     );
     const revenue = completed.reduce((acc, curr) => acc + curr.totalPrice, 0);
 
-    // 3. Product Rankings Logic
     const breadMap = {};
     const cakeMap = {};
 
     completed.forEach((order) => {
       order.orderItems.forEach((item) => {
         if (!item.product) return;
-
-        // LOGIC UPDATE: Use "Category is NOT cake" to mean "Breads/Others"
         if (item.product.category === "cake") {
-          // Rank Cakes by SubCategory (Type)
           const key = item.product.subCategory || "Custom Cake";
           cakeMap[key] = (cakeMap[key] || 0) + item.quantity;
         } else {
-          // Rank everything else (Breads, Pastries, etc.) by Product Name
           const key = item.name;
           breadMap[key] = (breadMap[key] || 0) + item.quantity;
         }
       });
     });
 
-    // Helper to sort and slice
-    const sortRank = (map) => {
-      return Object.entries(map)
+    const sortRank = (map) =>
+      Object.entries(map)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) =>
           rankSort === "highest" ? b.count - a.count : a.count - b.count,
         )
         .slice(0, 10);
-    };
 
     return {
       total: filteredByTime.length,
@@ -166,33 +199,6 @@ const AdminDashboard = () => {
   };
 
   const statsData = getStats();
-
-  const updateStatus = async (id, status) => {
-    const action = status === "rejected" ? "reject" : "mark as " + status;
-    if (!window.confirm(`Are you sure you want to ${action} this order?`))
-      return;
-    try {
-      await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
-      fetchOrders();
-    } catch {
-      alert("Update failed");
-    }
-  };
-
-  const getManageOrders = () => {
-    return orders.filter((order) => {
-      if (statusTab === "rejected") {
-        if (!["rejected", "cancelled"].includes(order.orderStatus))
-          return false;
-      } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
-        return false;
-      }
-      const isCake = order.orderItems.some((i) => i.customization);
-      if (typeFilter === "cake" && !isCake) return false;
-      if (typeFilter === "regular" && isCake) return false;
-      return true;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] p-6">
@@ -262,7 +268,7 @@ const AdminDashboard = () => {
               className="bg-white border border-gray-300 text-sm rounded-lg p-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm"
             >
               <option value="all">All Types</option>
-              <option value="regular">Regular Orders</option>
+              <option value="bakery">Bakery Orders</option>
               <option value="cake">Cake Reservations</option>
             </select>
           </div>
@@ -295,9 +301,15 @@ const AdminDashboard = () => {
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-medium">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
-                      {order.orderItems.some((i) => i.customization) && (
-                        <span className="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold border border-pink-200">
-                          CAKE
+
+                      {/* TYPE BADGE */}
+                      {order.orderType === "cake" ? (
+                        <span className="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold border border-pink-200 flex items-center gap-1">
+                          <CakeIcon style={{ fontSize: 12 }} /> CAKE ORDER
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold border border-amber-200 flex items-center gap-1">
+                          <BakeryDiningIcon style={{ fontSize: 12 }} /> BAKERY
                         </span>
                       )}
                     </div>
@@ -319,6 +331,8 @@ const AdminDashboard = () => {
                     <p className="font-bold text-lg text-gray-800">
                       ₱ {order.totalPrice.toLocaleString()}
                     </p>
+
+                    {/* Actions based on Status */}
                     {order.orderStatus === "pending" && (
                       <div className="flex gap-2 w-full">
                         <button
@@ -381,7 +395,6 @@ const AdminDashboard = () => {
       {/* VIEW: STATISTICS */}
       {mainView === "stats" && (
         <div className="max-w-7xl mx-auto">
-          {/* Time Filter */}
           <div className="flex justify-center mb-8">
             <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
               {["day", "month", "year"].map((period) => (
@@ -396,7 +409,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
               <div className="absolute -right-4 -top-4 p-4 opacity-5">
@@ -448,7 +460,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* --- NEW SECTION: PRODUCT RANKINGS --- */}
+          {/* --- RESTORED PRODUCT RANKINGS SECTION --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Header for Ranking */}
             <div className="md:col-span-2 flex justify-between items-end border-b pb-2">

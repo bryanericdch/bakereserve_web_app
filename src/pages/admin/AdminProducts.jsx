@@ -9,46 +9,74 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
-
-// Icons
+import InputAdornment from "@mui/material/InputAdornment";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import CakeOutlinedIcon from "@mui/icons-material/CakeOutlined";
 import BakeryDiningOutlinedIcon from "@mui/icons-material/BakeryDiningOutlined";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CloseIcon from "@mui/icons-material/Close";
+import GridViewIcon from "@mui/icons-material/GridView";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
+// USE THIS FOR LOCAL TESTING:
+//const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("bakery"); // 'bakery' | 'cake'
+  const [activeTab, setActiveTab] = useState("all");
 
-  // Modal States
   const [open, setOpen] = useState(false);
+  const [restockOpen, setRestockOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     category: "bakery",
     subCategory: "",
+    flavor: "",
     description: "",
     countInStock: 0,
   });
 
-  // Image State
+  const [restockData, setRestockData] = useState({
+    id: null,
+    name: "",
+    currentStock: 0,
+    addAmount: "",
+  });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+
+  // --- FLAVOR LIST ---
+  const cakeFlavors = [
+    "Chocolate",
+    "Vanilla",
+    "Mocha",
+    "Ube",
+    "Strawberry",
+    "Red Velvet",
+    "Caramel",
+  ];
+  const cakeTypes = [
+    "Round Cake",
+    "Square Cake",
+    "Roll Cake",
+    "Heart Cake",
+    "Tiered Cake",
+    "Sheet Cake",
+    "Cupcake",
+  ];
 
   const fetchProducts = async () => {
     try {
@@ -65,16 +93,16 @@ const AdminProducts = () => {
     fetchProducts();
   }, []);
 
-  // --- FILTER PRODUCTS BY TAB ---
-  // Matches 'category' in your Product.js model
-  const filteredProducts = products.filter((p) => p.category === activeTab);
+  const filteredProducts = products.filter((p) => {
+    if (activeTab === "all") return true;
+    return p.category === activeTab;
+  });
 
-  // --- FILE SELECT HANDLER ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file)); // Create local preview
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -82,37 +110,57 @@ const AdminProducts = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- SUBMIT (CREATE / UPDATE) ---
+  const openRestockModal = (product) => {
+    setRestockData({
+      id: product._id,
+      name: product.name,
+      currentStock: product.countInStock,
+      addAmount: "",
+    });
+    setRestockOpen(true);
+  };
+
+  const submitRestock = async () => {
+    if (!restockData.addAmount || Number(restockData.addAmount) <= 0) return;
+    const newStock = restockData.currentStock + Number(restockData.addAmount);
+    setProducts(
+      products.map((p) =>
+        p._id === restockData.id ? { ...p, countInStock: newStock } : p,
+      ),
+    );
+    setRestockOpen(false);
+    try {
+      await axios.put(
+        `${API_URL}/products/${restockData.id}`,
+        { countInStock: newStock },
+        config,
+      );
+      fetchProducts();
+    } catch {
+      fetchProducts();
+    }
+  };
+
   const handleSubmit = async () => {
-    // 1. Basic Validation
-    if (!formData.name || !formData.price || !formData.description) {
-      alert("Please fill in all required fields (Name, Price, Description)");
+    if (!formData.name.trim() || !formData.price || !formData.description) {
+      alert("Please fill in required fields");
       return;
     }
-
-    // 2. Image Validation (Required for new products)
-    if (!editMode && !imageFile) {
-      alert("Please select an image for the new product.");
-      return;
-    }
-
     setSubmitting(true);
-
     const data = new FormData();
     data.append("name", formData.name);
-    // Ensure numbers are valid, default to 0 if empty
-    data.append("price", Number(formData.price) || 0);
-    data.append("countInStock", Number(formData.countInStock) || 0);
+    data.append("price", Number(formData.price));
+    data.append("countInStock", Number(formData.countInStock));
     data.append("description", formData.description);
-    data.append("category", activeTab);
+    data.append("category", formData.category);
 
-    if (activeTab === "cake" && formData.subCategory) {
-      data.append("subCategory", formData.subCategory);
+    if (formData.category === "cake") {
+      if (formData.subCategory)
+        data.append("subCategory", formData.subCategory);
+      if (formData.flavor) data.append("flavor", formData.flavor);
     }
 
-    if (imageFile) {
-      data.append("image", imageFile);
-    }
+    if (imageFile) data.append("image", imageFile);
 
     try {
       const uploadConfig = {
@@ -121,59 +169,30 @@ const AdminProducts = () => {
           Authorization: `Bearer ${userInfo.token}`,
         },
       };
-
-      if (editMode) {
+      if (editMode)
         await axios.put(
           `${API_URL}/products/${selectedId}`,
           data,
           uploadConfig,
         );
-      } else {
-        await axios.post(`${API_URL}/products`, data, uploadConfig);
-      }
-
+      else await axios.post(`${API_URL}/products`, data, uploadConfig);
       setOpen(false);
       fetchProducts();
       resetForm();
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Error saving product");
+    } catch {
+      alert("Error saving product");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?"))
-      return;
+    if (!window.confirm("Delete this product?")) return;
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
       fetchProducts();
     } catch {
       alert("Failed to delete");
-    }
-  };
-
-  const updateStock = async (id, currentStock, change) => {
-    const newStock = currentStock + change;
-    if (newStock < 0) return;
-
-    // Optimistic Update
-    setProducts(
-      products.map((p) =>
-        p._id === id ? { ...p, countInStock: newStock } : p,
-      ),
-    );
-
-    try {
-      // Send partial update
-      await axios.put(
-        `${API_URL}/products/${id}`,
-        { countInStock: newStock },
-        config,
-      );
-    } catch {
-      fetchProducts(); // Revert on error
     }
   };
 
@@ -183,13 +202,14 @@ const AdminProducts = () => {
     setFormData({
       name: product.name,
       price: product.price,
-      category: product.category,
+      category: product.category || "bakery",
       subCategory: product.subCategory || "",
+      flavor: product.flavor || "",
       description: product.description,
       countInStock: product.countInStock,
     });
-    setImagePreview(product.image); // Show existing image
-    setImageFile(null); // Reset file input
+    setImagePreview(product.image);
+    setImageFile(null);
     setOpen(true);
   };
 
@@ -199,8 +219,9 @@ const AdminProducts = () => {
     setFormData({
       name: "",
       price: "",
-      category: activeTab,
+      category: "bakery",
       subCategory: "",
+      flavor: "",
       description: "",
       countInStock: 0,
     });
@@ -208,37 +229,29 @@ const AdminProducts = () => {
     setImagePreview("");
   };
 
-  // Matches your Product.js model enum
-  const cakeTypes = [
-    "Round Cake",
-    "Square Cake",
-    "Roll Cake",
-    "Heart Cake",
-    "Tiered Cake",
-    "Sheet Cake",
-    "Cupcake",
-  ];
-
   return (
     <div className="min-h-screen bg-[#F3F4F6] p-6">
-      {/* HEADER & TABS */}
       <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        {/* Tab Switcher */}
         <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
           <button
+            onClick={() => setActiveTab("all")}
+            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "all" ? "bg-gray-800 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+          >
+            <GridViewIcon fontSize="small" /> All
+          </button>
+          <button
             onClick={() => setActiveTab("bakery")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "bakery" ? "bg-amber-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "bakery" ? "bg-amber-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
           >
             <BakeryDiningOutlinedIcon fontSize="small" /> Breads
           </button>
           <button
             onClick={() => setActiveTab("cake")}
-            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "cake" ? "bg-pink-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "cake" ? "bg-pink-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
           >
             <CakeOutlinedIcon fontSize="small" /> Cakes
           </button>
         </div>
-
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -249,33 +262,24 @@ const AdminProducts = () => {
           sx={{
             backgroundColor: "#111827",
             fontWeight: "bold",
-            textTransform: "none",
             "&:hover": { backgroundColor: "#374151" },
           }}
         >
-          Add {activeTab === "cake" ? "Cake" : "Bread"}
+          Add Product
         </Button>
       </div>
 
-      {/* PRODUCT TABLE */}
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-20">
             <CircularProgress />
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <Inventory2OutlinedIcon
-              sx={{ fontSize: 60, opacity: 0.3, marginBottom: 1 }}
-            />
-            <p>No {activeTab} products found.</p>
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
               <tr>
                 <th className="p-4 border-b">Product</th>
-                <th className="p-4 border-b">Details</th>
+                <th className="p-4 border-b">Category</th>
                 <th className="p-4 border-b">Price</th>
                 <th className="p-4 border-b text-center">Stock</th>
                 <th className="p-4 border-b text-right">Actions</th>
@@ -285,67 +289,55 @@ const AdminProducts = () => {
               {filteredProducts.map((product) => (
                 <tr key={product._id} className="hover:bg-gray-50 transition">
                   <td className="p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 border overflow-hidden flex-shrink-0">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Inventory2OutlinedIcon fontSize="small" />
-                        </div>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-12 h-12 rounded-lg object-cover bg-gray-100 border"
+                    />
+                    <div>
+                      <span className="font-bold text-gray-800 block">
+                        {product.name}
+                      </span>
+                      {product.flavor && (
+                        <span className="text-xs text-amber-600 font-medium">
+                          Flavor: {product.flavor}
+                        </span>
                       )}
                     </div>
-                    <span className="font-bold text-gray-800">
-                      {product.name}
-                    </span>
                   </td>
-
                   <td className="p-4">
-                    {product.category === "cake" && product.subCategory ? (
-                      <span className="bg-pink-50 text-pink-600 px-2 py-1 rounded text-xs font-bold border border-pink-100">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold uppercase ${product.category === "cake" ? "bg-pink-100 text-pink-700" : "bg-amber-100 text-amber-700"}`}
+                    >
+                      {product.category}
+                    </span>
+                    {product.subCategory && (
+                      <p className="text-xs text-gray-500 mt-1">
                         {product.subCategory}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-500 italic truncate max-w-[150px] block">
-                        {product.description}
-                      </span>
+                      </p>
                     )}
                   </td>
-
                   <td className="p-4 font-mono font-bold text-gray-700">
                     ₱ {product.price}
                   </td>
-
                   <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          updateStock(product._id, product.countInStock, -1)
-                        }
-                        disabled={product.countInStock <= 0}
-                      >
-                        <RemoveIcon fontSize="small" />
-                      </IconButton>
+                    <div className="flex flex-col items-center gap-1">
                       <span
-                        className={`w-8 text-center font-bold ${product.countInStock < 10 ? "text-red-500" : "text-gray-800"}`}
+                        className={`font-bold ${product.countInStock < 10 ? "text-red-600" : "text-gray-800"}`}
                       >
                         {product.countInStock}
                       </span>
-                      <IconButton
+                      <Button
                         size="small"
-                        onClick={() =>
-                          updateStock(product._id, product.countInStock, 1)
-                        }
+                        variant="outlined"
+                        startIcon={<AddCircleOutlineIcon fontSize="small" />}
+                        onClick={() => openRestockModal(product)}
+                        sx={{ fontSize: "0.7rem", padding: "1px 6px" }}
                       >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
+                        Restock
+                      </Button>
                     </div>
                   </td>
-
                   <td className="p-4 text-right space-x-1">
                     <IconButton
                       color="primary"
@@ -367,118 +359,146 @@ const AdminProducts = () => {
         )}
       </div>
 
-      {/* --- ADD / EDIT MODAL --- */}
+      {/* ADD/EDIT MODAL */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle className="font-bold border-b pb-4">
-          {editMode
-            ? `Edit ${activeTab === "cake" ? "Cake" : "Bread"}`
-            : `Add New ${activeTab === "cake" ? "Cake" : "Bread"}`}
+        <DialogTitle className="flex justify-between items-center font-bold border-b pb-4">
+          {editMode ? "Edit Product" : "Add New Product"}
+          <IconButton onClick={() => setOpen(false)}>
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
-        <DialogContent className="pt-6">
-          <div className="space-y-4 pt-4">
-            {/* Image Upload Area */}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-20 h-20 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
+        <DialogContent className="pt-8 pb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">
+                Product Image *
+              </label>
+              <div
+                className="w-full aspect-square rounded-xl bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center overflow-hidden relative cursor-pointer hover:border-gray-400 transition"
+                onClick={() => document.getElementById("fileInput").click()}
+              >
                 {imagePreview ? (
                   <img
                     src={imagePreview}
-                    alt="Preview"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Inventory2OutlinedIcon className="text-gray-300" />
+                  <div className="text-center p-4">
+                    <CloudUploadIcon
+                      className="text-gray-300 mb-2"
+                      style={{ fontSize: 40 }}
+                    />
+                    <p className="text-xs text-gray-500">Click to upload</p>
+                  </div>
+                )}
+                <input
+                  id="fileInput"
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-5">
+              <TextField
+                label="Product Name"
+                name="name"
+                fullWidth
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="Price"
+                  name="price"
+                  type="number"
+                  fullWidth
+                  value={formData.price}
+                  onChange={handleChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₱</InputAdornment>
+                    ),
+                  }}
+                />
+                <TextField
+                  label="Stock"
+                  name="countInStock"
+                  type="number"
+                  fullWidth
+                  value={formData.countInStock}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  select
+                  label="Category"
+                  name="category"
+                  fullWidth
+                  value={formData.category}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="bakery">Bread / Bakery</MenuItem>
+                  <MenuItem value="cake">Cake</MenuItem>
+                </TextField>
+                {formData.category === "cake" && (
+                  <TextField
+                    select
+                    label="Cake Type"
+                    name="subCategory"
+                    fullWidth
+                    value={formData.subCategory}
+                    onChange={handleChange}
+                  >
+                    {cakeTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-gray-700 mb-1">
-                  Product Image
-                </p>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUploadIcon />}
-                  size="small"
+
+              {/* UPDATED FLAVOR SELECTION */}
+              {formData.category === "cake" && (
+                <TextField
+                  select
+                  label="Cake Flavor"
+                  name="flavor"
+                  fullWidth
+                  value={formData.flavor}
+                  onChange={handleChange}
                 >
-                  Select Image
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
-                </Button>
-                <p className="text-xs text-gray-400 mt-1">
-                  {imageFile ? imageFile.name : "No file selected"}
-                </p>
-              </div>
-            </div>
+                  {cakeFlavors.map((f) => (
+                    <MenuItem key={f} value={f}>
+                      {f}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
 
-            <TextField
-              label="Product Name"
-              name="name"
-              fullWidth
-              value={formData.name}
-              onChange={handleChange}
-            />
-            <TextField
-              label="Description"
-              name="description"
-              fullWidth
-              multiline
-              rows={2}
-              value={formData.description}
-              onChange={handleChange}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
               <TextField
-                label="Price (₱)"
-                name="price"
-                type="number"
+                label="Description"
+                name="description"
                 fullWidth
-                value={formData.price}
-                onChange={handleChange}
-              />
-              <TextField
-                label="Initial Stock"
-                name="countInStock"
-                type="number"
-                fullWidth
-                value={formData.countInStock}
+                multiline
+                rows={3}
+                value={formData.description}
                 onChange={handleChange}
               />
             </div>
-
-            {/* Show Cake Type dropdown ONLY if tab is Cake */}
-            {activeTab === "cake" && (
-              <TextField
-                select
-                label="Cake Type"
-                name="subCategory"
-                fullWidth
-                value={formData.subCategory}
-                onChange={handleChange}
-              >
-                {cakeTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
           </div>
         </DialogContent>
-        <DialogActions sx={{ padding: "16px", borderTop: "1px solid #f3f4f6" }}>
-          <Button
-            onClick={() => setOpen(false)}
-            color="inherit"
-            disabled={submitting}
-          >
+        <DialogActions sx={{ padding: "20px", borderTop: "1px solid #f3f4f6" }}>
+          <Button onClick={() => setOpen(false)} color="inherit">
             Cancel
           </Button>
           <Button
@@ -487,13 +507,38 @@ const AdminProducts = () => {
             disabled={submitting}
             sx={{ bgcolor: "#111827" }}
           >
-            {submitting ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : editMode ? (
-              "Update"
-            ) : (
-              "Save"
-            )}
+            {submitting ? "Saving..." : "Save Product"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* RESTOCK MODAL */}
+      <Dialog
+        open={restockOpen}
+        onClose={() => setRestockOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Restock</DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="mb-4">
+            Add stock for: <b>{restockData.name}</b>
+          </p>
+          <TextField
+            label="Amount to Add"
+            type="number"
+            fullWidth
+            autoFocus
+            value={restockData.addAmount}
+            onChange={(e) =>
+              setRestockData({ ...restockData, addAmount: e.target.value })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRestockOpen(false)}>Cancel</Button>
+          <Button onClick={submitRestock} variant="contained">
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
