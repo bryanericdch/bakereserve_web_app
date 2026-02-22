@@ -3,13 +3,14 @@ import Landing from "../pages/Landing";
 import Home from "../pages/Home";
 import Auth from "../pages/Auth";
 import Cart from "../pages/Cart";
+import Orders from "../pages/Orders"; // <--- ADD THIS IMPORT
+import Profile from "../pages/Profile";
 import ProtectedRoute from "../components/ProtectedRoute";
-import ProductDetails from "../pages/ProductDetails";
-import CreateCake from "../pages/CreateCake";
+import PaymentStatus from "../pages/PaymentStatus";
 
 // Admin Imports
 import AdminRoute from "../components/AdminRoute";
-import AdminLayout from "../components/AdminLayout"; // <--- Import Layout
+import AdminLayout from "../components/AdminLayout";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminProducts from "../pages/admin/AdminProducts";
 
@@ -23,43 +24,20 @@ const AppRoutes = () => {
       {/* Customer Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
-        <Route
-          path="/orders"
-          element={
-            <div className="p-10 text-center">
-              <h1>My Orders</h1>
-            </div>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <div className="p-10 text-center">
-              <h1>Profile</h1>
-            </div>
-          }
-        />
-      </Route>
 
-      <Route path="/create-cake" element={<CreateCake />} />
+        {/* --- UPDATE THIS ROUTE --- */}
+        <Route path="/orders" element={<Orders />} />
+
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/payment/status" element={<PaymentStatus />} />
+      </Route>
 
       {/* Admin Routes */}
       <Route element={<AdminRoute />}>
-        {/* WRAP ADMIN PAGES IN THE LAYOUT */}
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
-          {/* Create this page next! */}
-          <Route
-            path="/admin/products"
-            element={
-              <div className="p-10">
-                <h1>Inventory Management (Coming Soon)</h1>
-              </div>
-            }
-          />
         </Route>
       </Route>
 
