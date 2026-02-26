@@ -12,6 +12,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Import Arrow Icon
 
 // Ensure this matches your live backend or localhost
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
+//const API_URL = "http://localhost:5000/api/auth";
 
 const countryCodes = [
   { code: "+63", label: "PH (+63)" },
