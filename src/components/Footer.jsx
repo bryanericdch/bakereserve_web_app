@@ -1,10 +1,9 @@
-import { Link } from "react-router-dom";
-
 const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-200 pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 text-center md:text-left">
+        {/* Changed to grid-cols-2 since Quick Links is removed */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-center md:text-left">
           {/* Brand */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 tracking-tighter mb-4">
@@ -16,31 +15,8 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="flex flex-col space-y-3">
-            <h3 className="font-bold text-gray-800">Quick Links</h3>
-            <Link
-              to="/home"
-              className="text-sm text-gray-500 hover:text-amber-500 transition"
-            >
-              Our Menu
-            </Link>
-            <Link
-              to="/create-cake"
-              className="text-sm text-gray-500 hover:text-amber-500 transition"
-            >
-              Create Your Cake
-            </Link>
-            <Link
-              to="/auth"
-              className="text-sm text-gray-500 hover:text-amber-500 transition"
-            >
-              Login / Register
-            </Link>
-          </div>
-
-          {/* Contact */}
-          <div className="flex flex-col space-y-3">
+          {/* Contact - Pushed to the right on desktop */}
+          <div className="flex flex-col space-y-3 md:items-end">
             <h3 className="font-bold text-gray-800">Contact Us</h3>
             <p className="text-sm text-gray-500">
               📍 Dagupan City, Philippines

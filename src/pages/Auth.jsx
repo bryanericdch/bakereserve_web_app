@@ -138,8 +138,13 @@ const Auth = () => {
           password: formData.password,
         });
 
-        localStorage.setItem("userInfo", JSON.stringify(data));
-        navigate("/home");
+        // INSTEAD OF LOGGING IN, JUST SHOW SUCCESS MESSAGE
+        alert(
+          data.message ||
+            "Registration successful! Please check your email to verify your account.",
+        );
+        setIsLogin(true); // switch to login tab
+        setFormData({ ...formData, password: "" }); // clear password
       }
     } catch (err) {
       console.error(err);
@@ -259,6 +264,18 @@ const Auth = () => {
               onChange={handleChange}
               helperText={!isLogin ? "Must include special char (!@#$)" : ""}
             />
+
+            {isLogin && (
+              <div className="text-right mt-1">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-xs font-semibold text-amber-600 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
 
             {!isLogin && (
               <div className="flex gap-2">

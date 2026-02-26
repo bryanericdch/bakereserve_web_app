@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "@mui/material/Button";
 import LandingHeader from "../components/LandingHeader";
-import Footer from "../components/Footer"; // <-- Import the new Footer
+import Footer from "../components/Footer";
 import landingImage from "../assets/img/landing1.png";
 
 export default function Landing() {
@@ -20,21 +19,22 @@ export default function Landing() {
     }
   }, [navigate]);
 
-  // Placeholder images for the carousels
+  // Verified working images for Cakes
   const cakeImages = [
-    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80",
-    "https://images.unsplash.com/photo-1557925923-cd4648e211a0?w=400&q=80",
-    "https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=400&q=80",
-    "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=400&q=80",
-    "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&q=80",
+    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?q=80&w=600&auto=format&fit=crop",
   ];
 
+  // Verified working images for Breads
   const breadImages = [
-    "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80",
-    "https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=400&q=80",
-    "https://images.unsplash.com/photo-1589367920969-18b69188a1e1?w=400&q=80",
-    "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=400&q=80",
-    "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&q=80",
+    "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1598373182133-52452f7691ef?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1589367920969-18b69188a1e1?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1517433622924-f7c81d0411a0?q=80&w=600&auto=format&fit=crop",
   ];
 
   return (
@@ -69,70 +69,30 @@ export default function Landing() {
       {/* 1. Reusable Header */}
       <LandingHeader />
 
-      {/* 2. Hero Section (Retained your original design) */}
+      {/* 2. Hero Section */}
       <section className="relative w-full h-screen">
-        {/* Background Image container */}
         <div className="absolute inset-0">
           <img
             src={landingImage}
             alt="Bakery Display"
             className="w-full h-full object-cover"
           />
-          {/* Dark Overlay - makes text readable */}
           <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
-        {/* Hero Content - Centered */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
           <h1 className="text-5xl md:text-7xl font-extrabold mb-6 drop-shadow-lg leading-tight">
             Reserve the <span className="text-amber-400">Sweetness</span>
           </h1>
-          <p className="text-lg md:text-2xl mb-8 max-w-2xl font-light drop-shadow-md">
+          <p className="text-lg md:text-2xl max-w-2xl font-light drop-shadow-md">
             Skip the line. Pre-order your favorite freshly baked breads and
             cakes today.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate("/products")}
-              sx={{
-                backgroundColor: "#f59e0b", // Amber-500
-                padding: "12px 36px",
-                fontSize: "1.1rem",
-                fontWeight: "bold",
-                "&:hover": { backgroundColor: "#d97706" },
-              }}
-            >
-              View Menu
-            </Button>
-
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => navigate("/auth")}
-              sx={{
-                color: "white",
-                borderColor: "white",
-                padding: "12px 36px",
-                fontSize: "1.1rem",
-                borderWidth: "2px",
-                "&:hover": {
-                  borderWidth: "2px",
-                  borderColor: "#f59e0b",
-                  color: "#f59e0b",
-                },
-              }}
-            >
-              Sign Up
-            </Button>
-          </div>
         </div>
       </section>
 
       {/* 3. Simple Feature Section */}
-      <section className="py-20 px-6 text-center bg-white">
+      <section className="py-20 px-6 text-center bg-white border-b border-gray-100">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
           Why BakeReserve?
         </h2>
@@ -143,7 +103,7 @@ export default function Landing() {
       </section>
 
       {/* 4. Cake Carousel (Circles scrolling left) */}
-      <section className="w-full py-10 bg-gray-50">
+      <section className="w-full py-12 bg-gray-50">
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">
           Our Signature Cakes
         </h2>
@@ -167,7 +127,7 @@ export default function Landing() {
       </section>
 
       {/* 5. Bread Carousel (Squares scrolling right) */}
-      <section className="w-full py-10 bg-white">
+      <section className="w-full py-12 bg-white">
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">
           Freshly Baked Breads
         </h2>
@@ -177,7 +137,7 @@ export default function Landing() {
             {[...breadImages, ...breadImages].map((img, idx) => (
               <div
                 key={idx}
-                className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden flex-shrink-0 shadow-md border-2 border-white group cursor-pointer"
+                className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden flex-shrink-0 shadow-md border-2 border-gray-100 group cursor-pointer"
               >
                 <img
                   src={img}

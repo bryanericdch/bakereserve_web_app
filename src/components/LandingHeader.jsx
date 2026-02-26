@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@mui/material/Button";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 const LandingHeader = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -31,20 +32,13 @@ const LandingHeader = () => {
         BakeReserve
       </div>
 
-      {/* Desktop Navigation */}
-      <nav className="hidden md:flex gap-8 items-center font-medium">
-        <button
-          onClick={() => navigate("/")}
-          className="hover:text-amber-500 transition-colors"
-        >
-          Home
-        </button>
-        <button
-          onClick={() => navigate("/products")}
-          className="hover:text-amber-500 transition-colors"
-        >
-          Menu
-        </button>
+      {/* Desktop Navigation - Replaced with Shop Schedule */}
+      <nav className="hidden md:flex items-center gap-2 font-medium text-sm">
+        <AccessTimeIcon
+          fontSize="small"
+          className={scrolled ? "text-amber-600" : "text-amber-400"}
+        />
+        <span>Open Mon - Sat | 8:00 AM - 6:00 PM</span>
       </nav>
 
       {/* Login Button */}
@@ -56,6 +50,7 @@ const LandingHeader = () => {
           sx={{
             textTransform: "none",
             fontSize: "1rem",
+            fontWeight: "bold",
             borderColor: scrolled ? "" : "white",
             backgroundColor: scrolled ? "#1f2937" : "transparent", // dark gray when scrolled
             "&:hover": {
@@ -64,7 +59,7 @@ const LandingHeader = () => {
             },
           }}
         >
-          Login
+          Login | Sign Up
         </Button>
       </div>
     </header>
