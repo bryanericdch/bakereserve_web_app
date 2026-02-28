@@ -27,11 +27,9 @@ const Home = () => {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Extract search query from URL
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get("search") || "";
 
-  // Modals
   const [detailProduct, setDetailProduct] = useState(null);
   const [quickAddProduct, setQuickAddProduct] = useState(null);
 
@@ -63,7 +61,7 @@ const Home = () => {
     if (!userInfo.token)
       return setAlert({
         open: true,
-        message: "Please login to order",
+        message: "Please login to reserve",
         severity: "error",
       });
     try {
@@ -74,34 +72,27 @@ const Home = () => {
       );
       setAlert({
         open: true,
-        message: `Added ${qty} ${product.name} to cart!`,
+        message: `Reserved ${qty} ${product.name}!`,
         severity: "success",
       });
     } catch {
       setAlert({
         open: true,
-        message: "Failed to add to cart",
+        message: "Failed to reserve item",
         severity: "error",
       });
     }
   };
 
-  const clearSearch = () => {
-    navigate("/home");
-  };
+  const clearSearch = () => navigate("/home");
 
-  // --- FILTERING LOGIC ---
   const filteredProducts = products.filter((p) => {
-    // 1. Category Filter
     const matchCategory = filter === "all" ? true : p.category === filter;
-
-    // 2. Search Query Filter
     const matchSearch =
       searchQuery === "" ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.flavor && p.flavor.toLowerCase().includes(searchQuery.toLowerCase()));
-
     return matchCategory && matchSearch;
   });
 
@@ -120,7 +111,6 @@ const Home = () => {
         </Alert>
       </Snackbar>
 
-      {/* HERO SECTION */}
       <section className="relative w-full h-[40vh] md:h-[50vh] min-h-[400px] mb-12">
         <div className="absolute inset-0">
           <img
@@ -130,7 +120,6 @@ const Home = () => {
           />
           <div className="absolute inset-0 bg-black/60"></div>
         </div>
-
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-lg leading-tight">
             Welcome to <span className="text-amber-400">BakeReserve</span>
@@ -138,7 +127,6 @@ const Home = () => {
           <p className="text-md md:text-xl max-w-2xl font-light drop-shadow-md mb-8">
             Freshly baked goods and customized cakes reserved just for you.
           </p>
-
           <button
             onClick={() => navigate("/create-cake")}
             className="flex items-center gap-2 bg-amber-500 text-white px-8 py-3.5 rounded-full text-lg font-bold hover:bg-amber-600 transition-transform shadow-xl active:scale-95"
@@ -148,7 +136,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* MENU FILTERS */}
       <div
         id="menu-section"
         className="flex justify-center mb-6 px-4 pt-4 scroll-mt-24"
@@ -171,7 +158,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* SEARCH BANNER */}
       {searchQuery && (
         <div className="max-w-7xl mx-auto px-6 w-full flex justify-center mb-8">
           <div className="bg-amber-100 border border-amber-200 text-amber-800 px-5 py-2 rounded-full text-sm font-bold flex items-center gap-3 shadow-sm">
@@ -186,7 +172,6 @@ const Home = () => {
         </div>
       )}
 
-      {/* PRODUCT GRID */}
       <div className="max-w-7xl mx-auto px-6 pb-24 flex-1 w-full">
         {loading ? (
           <div className="flex justify-center mt-10">
@@ -197,14 +182,6 @@ const Home = () => {
             <p className="text-gray-500 font-medium text-lg">
               No products found matching your criteria.
             </p>
-            {searchQuery && (
-              <button
-                onClick={clearSearch}
-                className="mt-4 text-amber-600 font-bold hover:underline"
-              >
-                Clear Search
-              </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -229,7 +206,7 @@ const Home = () => {
                   {product.countInStock === 0 && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <span className="text-white font-bold border-2 border-white px-4 py-1.5 uppercase tracking-widest text-sm rounded-md">
-                        Sold Out
+                        Fully Booked
                       </span>
                     </div>
                   )}
@@ -250,7 +227,6 @@ const Home = () => {
                     {product.description}
                   </p>
 
-                  {/* --- UPDATED PRICE & STOCK DISPLAY --- */}
                   <div className="mt-auto flex items-center justify-between mb-5">
                     <div>
                       <span className="text-amber-600 font-bold text-xl">
@@ -263,11 +239,11 @@ const Home = () => {
                       )}
                     </div>
                     <span
-                      className={`text-xs font-semibold ${product.countInStock > 0 ? "text-green-600 bg-green-50 px-2 py-1 rounded" : "text-red-500 bg-red-50 px-2 py-1 rounded"}`}
+                      className={`text-[10px] uppercase tracking-wider font-bold ${product.countInStock > 0 ? "text-green-700 bg-green-100 px-2 py-1 rounded-md border border-green-200" : "text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-200"}`}
                     >
                       {product.countInStock > 0
-                        ? `${product.countInStock} Available`
-                        : "Out of Stock"}
+                        ? `${product.countInStock} Slots Left`
+                        : "Fully Booked"}
                     </span>
                   </div>
 
@@ -301,7 +277,7 @@ const Home = () => {
                           disabled={product.countInStock === 0}
                           className={`flex-1 ${product.countInStock > 0 ? "bg-slate-900 hover:bg-slate-800 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all`}
                         >
-                          <AddShoppingCartIcon fontSize="small" /> Add
+                          <AddShoppingCartIcon fontSize="small" /> Pre-Order
                         </button>
                       </>
                     )}
@@ -325,10 +301,8 @@ const Home = () => {
         product={quickAddProduct}
         onConfirm={handleQuickAdd}
       />
-
       <Footer />
     </div>
   );
 };
-
 export default Home;

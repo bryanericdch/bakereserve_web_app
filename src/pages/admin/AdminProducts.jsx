@@ -13,7 +13,6 @@ import InputAdornment from "@mui/material/InputAdornment";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import AddIcon from "@mui/icons-material/Add";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import CakeOutlinedIcon from "@mui/icons-material/CakeOutlined";
 import BakeryDiningOutlinedIcon from "@mui/icons-material/BakeryDiningOutlined";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -21,8 +20,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import GridViewIcon from "@mui/icons-material/GridView";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
-// USE THIS FOR LOCAL TESTING:
-//const API_URL = "http://localhost:5000/api";
+// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const AdminProducts = () => {
@@ -59,7 +57,6 @@ const AdminProducts = () => {
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-  // --- FLAVOR LIST ---
   const cakeFlavors = [
     "Chocolate",
     "Vanilla",
@@ -94,10 +91,9 @@ const AdminProducts = () => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter((p) => {
-    if (activeTab === "all") return true;
-    return p.category === activeTab;
-  });
+  const filteredProducts = products.filter((p) =>
+    activeTab === "all" ? true : p.category === activeTab,
+  );
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -107,9 +103,8 @@ const AdminProducts = () => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const openRestockModal = (product) => {
     setRestockData({
@@ -143,10 +138,8 @@ const AdminProducts = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.price || !formData.description) {
-      alert("Please fill in required fields");
-      return;
-    }
+    if (!formData.name.trim() || !formData.price || !formData.description)
+      return alert("Please fill in required fields");
     setSubmitting(true);
     const data = new FormData();
     data.append("name", formData.name);
@@ -154,7 +147,7 @@ const AdminProducts = () => {
     data.append("countInStock", Number(formData.countInStock));
     data.append("description", formData.description);
     data.append("category", formData.category);
-    data.append("piecesPerPack", Number(formData.piecesPerPack));
+    data.append("piecesPerPack", Number(formData.piecesPerPack) || 1); // Added Pack sizing
 
     if (formData.category === "cake") {
       if (formData.subCategory)
@@ -209,6 +202,7 @@ const AdminProducts = () => {
       flavor: product.flavor || "",
       description: product.description,
       countInStock: product.countInStock,
+      piecesPerPack: product.piecesPerPack || 1,
     });
     setImagePreview(product.image);
     setImageFile(null);
@@ -226,6 +220,7 @@ const AdminProducts = () => {
       flavor: "",
       description: "",
       countInStock: 0,
+      piecesPerPack: 1,
     });
     setImageFile(null);
     setImagePreview("");
@@ -283,7 +278,7 @@ const AdminProducts = () => {
                 <th className="p-4 border-b">Product</th>
                 <th className="p-4 border-b">Category</th>
                 <th className="p-4 border-b">Price</th>
-                <th className="p-4 border-b text-center">Stock</th>
+                <th className="p-4 border-b text-center">Daily Capacity</th>
                 <th className="p-4 border-b text-right">Actions</th>
               </tr>
             </thead>
@@ -313,6 +308,11 @@ const AdminProducts = () => {
                     >
                       {product.category}
                     </span>
+                    {product.category === "bakery" && (
+                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
+                        {product.piecesPerPack} pcs / pack
+                      </p>
+                    )}
                     {product.subCategory && (
                       <p className="text-xs text-gray-500 mt-1">
                         {product.subCategory}
@@ -327,7 +327,7 @@ const AdminProducts = () => {
                       <span
                         className={`font-bold ${product.countInStock < 10 ? "text-red-600" : "text-gray-800"}`}
                       >
-                        {product.countInStock}
+                        {product.countInStock} Slots
                       </span>
                       <Button
                         size="small"
@@ -336,7 +336,7 @@ const AdminProducts = () => {
                         onClick={() => openRestockModal(product)}
                         sx={{ fontSize: "0.7rem", padding: "1px 6px" }}
                       >
-                        Restock
+                        Add Slots
                       </Button>
                     </div>
                   </td>
@@ -361,7 +361,6 @@ const AdminProducts = () => {
         )}
       </div>
 
-      {/* ADD/EDIT MODAL */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -431,7 +430,7 @@ const AdminProducts = () => {
                   }}
                 />
                 <TextField
-                  label="Stock"
+                  label="Max Daily Slots"
                   name="countInStock"
                   type="number"
                   fullWidth
@@ -451,6 +450,20 @@ const AdminProducts = () => {
                   <MenuItem value="bakery">Bread / Bakery</MenuItem>
                   <MenuItem value="cake">Cake</MenuItem>
                 </TextField>
+
+                {/* NEW: PIECES PER PACK FOR BAKERY */}
+                {formData.category === "bakery" && (
+                  <TextField
+                    label="Pieces per Pack"
+                    name="piecesPerPack"
+                    type="number"
+                    fullWidth
+                    value={formData.piecesPerPack}
+                    onChange={handleChange}
+                    InputProps={{ inputProps: { min: 1 } }}
+                  />
+                )}
+
                 {formData.category === "cake" && (
                   <TextField
                     select
@@ -468,20 +481,6 @@ const AdminProducts = () => {
                   </TextField>
                 )}
               </div>
-
-              {formData.category === "bakery" && (
-                <TextField
-                  label="Pieces per Pack (e.g. 6 pcs per pack)"
-                  name="piecesPerPack"
-                  type="number"
-                  fullWidth
-                  value={formData.piecesPerPack}
-                  onChange={handleChange}
-                  InputProps={{ inputProps: { min: 1 } }}
-                />
-              )}
-
-              {/* UPDATED FLAVOR SELECTION */}
               {formData.category === "cake" && (
                 <TextField
                   select
@@ -498,7 +497,6 @@ const AdminProducts = () => {
                   ))}
                 </TextField>
               )}
-
               <TextField
                 label="Description"
                 name="description"
@@ -526,20 +524,19 @@ const AdminProducts = () => {
         </DialogActions>
       </Dialog>
 
-      {/* RESTOCK MODAL */}
       <Dialog
         open={restockOpen}
         onClose={() => setRestockOpen(false)}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Restock</DialogTitle>
+        <DialogTitle>Add Daily Slots</DialogTitle>
         <DialogContent className="pt-4">
           <p className="mb-4">
-            Add stock for: <b>{restockData.name}</b>
+            Add daily capacity for: <b>{restockData.name}</b>
           </p>
           <TextField
-            label="Amount to Add"
+            label="Additional Slots"
             type="number"
             fullWidth
             autoFocus
@@ -559,5 +556,4 @@ const AdminProducts = () => {
     </div>
   );
 };
-
 export default AdminProducts;

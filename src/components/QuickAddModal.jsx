@@ -4,7 +4,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -16,14 +15,14 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
 
   const handleConfirm = () => {
     onConfirm(product, quantity);
-    setQuantity(1); // Reset
+    setQuantity(1);
     onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle className="text-center font-bold pb-0">
-        Add to Cart
+        Reserve Item
       </DialogTitle>
       <DialogContent className="flex flex-col items-center pt-4">
         <img
@@ -32,7 +31,12 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
           alt=""
         />
         <h3 className="font-bold text-gray-800">{product.name}</h3>
-        <p className="text-red-500 font-bold mb-4">₱ {product.price}</p>
+        <p className="text-red-500 font-bold mb-4">
+          ₱ {product.price}{" "}
+          {product.category === "bakery" && (
+            <span className="text-xs text-gray-400">/ pack</span>
+          )}
+        </p>
 
         <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg border">
           <IconButton
@@ -50,8 +54,8 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
             <AddIcon />
           </IconButton>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          {product.countInStock} available
+        <p className="text-xs text-green-600 font-semibold mt-2">
+          {product.countInStock} slots left today
         </p>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", paddingBottom: 3 }}>
@@ -63,7 +67,8 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
           variant="contained"
           sx={{ bgcolor: "#EF4444", fontWeight: "bold" }}
         >
-          Add {quantity} Item(s)
+          Reserve {quantity}{" "}
+          {product.category === "bakery" ? "Pack(s)" : "Item(s)"}
         </Button>
       </DialogActions>
     </Dialog>

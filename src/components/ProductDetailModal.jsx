@@ -14,7 +14,6 @@ const ProductDetailModal = ({
   onQuickAdd,
 }) => {
   if (!product) return null;
-
   const isCake = product.category === "cake";
 
   return (
@@ -60,7 +59,14 @@ const ProductDetailModal = ({
               )}
             </div>
           </div>
-          <p className="text-2xl font-bold text-red-500">₱ {product.price}</p>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-red-500">₱ {product.price}</p>
+            {!isCake && (
+              <p className="text-xs text-gray-500">
+                / pack of {product.piecesPerPack || 1}
+              </p>
+            )}
+          </div>
         </div>
 
         <p className="text-gray-600 leading-relaxed mb-8">
@@ -68,7 +74,6 @@ const ProductDetailModal = ({
         </p>
 
         <div className="flex gap-3">
-          {/* Action Buttons based on Type */}
           {isCake ? (
             <Button
               fullWidth
@@ -85,7 +90,7 @@ const ProductDetailModal = ({
                 fontWeight: "bold",
               }}
             >
-              Personalize & Add
+              Personalize & Reserve
             </Button>
           ) : (
             <Button
@@ -104,7 +109,7 @@ const ProductDetailModal = ({
                 fontWeight: "bold",
               }}
             >
-              {product.countInStock > 0 ? "Add to Cart" : "Out of Stock"}
+              {product.countInStock > 0 ? "Reserve Now" : "Fully Booked"}
             </Button>
           )}
         </div>
@@ -112,5 +117,4 @@ const ProductDetailModal = ({
     </Dialog>
   );
 };
-
 export default ProductDetailModal;

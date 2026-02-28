@@ -11,22 +11,17 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-// USE LOCALHOST FOR TESTING
-//const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-
-  // Customization State (Reduced for Pre-made)
   const [customization, setCustomization] = useState({
     message: "",
-    tiers: "1", // Default to 1
+    tiers: "1",
     notes: "",
   });
 
@@ -51,19 +46,16 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
-  const handleCustomChange = (e) => {
+  const handleCustomChange = (e) =>
     setCustomization({ ...customization, [e.target.name]: e.target.value });
-  };
 
   const addToCart = async () => {
-    if (!userInfo.token) {
-      setAlert({
+    if (!userInfo.token)
+      return setAlert({
         open: true,
         message: "Please login to order",
         severity: "error",
       });
-      return;
-    }
 
     try {
       await axios.post(
@@ -75,21 +67,21 @@ const ProductDetails = () => {
             product.category === "cake"
               ? {
                   ...customization,
-                  flavor: product.flavor, // Auto-attach the fixed flavor
-                  shape: product.subCategory, // Auto-attach fixed shape
+                  flavor: product.flavor,
+                  shape: product.subCategory,
                   isCustomBuild: false,
                 }
               : {},
         },
         { headers: { Authorization: `Bearer ${userInfo.token}` } },
       );
-      setAlert({ open: true, message: "Added to cart!", severity: "success" });
-    } catch {
       setAlert({
         open: true,
-        message: "Failed to add to cart",
-        severity: "error",
-      });
+        message: "Added to reservation!",
+        severity: "success",
+      }); // CHANGED
+    } catch {
+      setAlert({ open: true, message: "Failed to reserve", severity: "error" });
     }
   };
 
@@ -123,7 +115,6 @@ const ProductDetails = () => {
         >
           <ArrowBackIcon fontSize="small" /> Back to Menu
         </button>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-200">
             <img
@@ -152,18 +143,21 @@ const ProductDetails = () => {
 
             <p className="text-2xl font-bold text-red-500 mb-4">
               ₱ {product.price}
+              {product.category === "bakery" && (
+                <span className="text-sm text-gray-500 font-normal ml-2">
+                  / pack of {product.piecesPerPack || 1}
+                </span>
+              )}
             </p>
             <p className="text-gray-600 mb-8 leading-relaxed">
               {product.description}
             </p>
 
-            {/* SIMPLIFIED CUSTOMIZATION (For Pre-Made Cakes) */}
             {product.category === "cake" && (
               <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6 space-y-4">
                 <h3 className="font-bold text-gray-800 border-b pb-2 mb-2">
                   Personalize Your Cake
                 </h3>
-
                 <TextField
                   fullWidth
                   label="Dedication Message"
@@ -174,8 +168,6 @@ const ProductDetails = () => {
                   variant="outlined"
                   size="small"
                 />
-
-                {/* Only show Tier selection if it is a Tiered Cake */}
                 {product.subCategory === "Tiered Cake" && (
                   <TextField
                     select
@@ -191,7 +183,6 @@ const ProductDetails = () => {
                     <MenuItem value="3">3 Tiers</MenuItem>
                   </TextField>
                 )}
-
                 <TextField
                   fullWidth
                   multiline
@@ -234,7 +225,7 @@ const ProductDetails = () => {
                   },
                 }}
               >
-                {product.countInStock > 0 ? "Add to Order" : "Out of Stock"}
+                {product.countInStock > 0 ? "Reserve Now" : "Fully Booked"}
               </Button>
             </div>
           </div>
@@ -243,5 +234,4 @@ const ProductDetails = () => {
     </div>
   );
 };
-
 export default ProductDetails;
