@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // <--- added useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import HomeHeader from "../components/HomeHeader";
 import Footer from "../components/Footer";
@@ -13,7 +13,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import EditIcon from "@mui/icons-material/Edit";
 import CakeIcon from "@mui/icons-material/Cake";
-import CloseIcon from "@mui/icons-material/Close"; // <--- Added CloseIcon
+import CloseIcon from "@mui/icons-material/Close";
 
 import landingImage from "../assets/img/landing1.png";
 
@@ -249,14 +249,25 @@ const Home = () => {
                   <p className="text-sm text-gray-500 mb-4 line-clamp-2">
                     {product.description}
                   </p>
+
+                  {/* --- UPDATED PRICE & STOCK DISPLAY --- */}
                   <div className="mt-auto flex items-center justify-between mb-5">
-                    <span className="text-amber-600 font-bold text-xl">
-                      ₱ {product.price}
-                    </span>
+                    <div>
+                      <span className="text-amber-600 font-bold text-xl">
+                        ₱ {product.price}
+                      </span>
+                      {product.category === "bakery" && (
+                        <span className="text-[10px] text-gray-500 block">
+                          / pack of {product.piecesPerPack || 1}
+                        </span>
+                      )}
+                    </div>
                     <span
                       className={`text-xs font-semibold ${product.countInStock > 0 ? "text-green-600 bg-green-50 px-2 py-1 rounded" : "text-red-500 bg-red-50 px-2 py-1 rounded"}`}
                     >
-                      {product.countInStock > 0 ? "Available" : "Out of Stock"}
+                      {product.countInStock > 0
+                        ? `${product.countInStock} Available`
+                        : "Out of Stock"}
                     </span>
                   </div>
 

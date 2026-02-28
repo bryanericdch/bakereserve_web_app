@@ -270,6 +270,7 @@ const AdminDashboard = () => {
               <option value="all">All Types</option>
               <option value="bakery">Bakery Orders</option>
               <option value="cake">Cake Reservations</option>
+              <option value="custom_cake">Custom Cakes</option>
             </select>
           </div>
 
@@ -303,13 +304,17 @@ const AdminDashboard = () => {
                       </span>
 
                       {/* TYPE BADGE */}
-                      {order.orderType === "cake" ? (
-                        <span className="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold border border-pink-200 flex items-center gap-1">
-                          <CakeIcon style={{ fontSize: 12 }} /> CAKE ORDER
+                      {order.orderType === "custom_cake" ? (
+                        <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold border border-purple-200">
+                          CUSTOM CAKE
+                        </span>
+                      ) : order.orderType === "cake" ? (
+                        <span className="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold border border-pink-200">
+                          PRE-MADE CAKE
                         </span>
                       ) : (
-                        <span className="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold border border-amber-200 flex items-center gap-1">
-                          <BakeryDiningIcon style={{ fontSize: 12 }} /> BAKERY
+                        <span className="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                          BAKERY PACKS
                         </span>
                       )}
                     </div>

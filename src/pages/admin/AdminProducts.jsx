@@ -44,6 +44,7 @@ const AdminProducts = () => {
     flavor: "",
     description: "",
     countInStock: 0,
+    piecesPerPack: 1,
   });
 
   const [restockData, setRestockData] = useState({
@@ -153,6 +154,7 @@ const AdminProducts = () => {
     data.append("countInStock", Number(formData.countInStock));
     data.append("description", formData.description);
     data.append("category", formData.category);
+    data.append("piecesPerPack", Number(formData.piecesPerPack));
 
     if (formData.category === "cake") {
       if (formData.subCategory)
@@ -466,6 +468,18 @@ const AdminProducts = () => {
                   </TextField>
                 )}
               </div>
+
+              {formData.category === "bakery" && (
+                <TextField
+                  label="Pieces per Pack (e.g. 6 pcs per pack)"
+                  name="piecesPerPack"
+                  type="number"
+                  fullWidth
+                  value={formData.piecesPerPack}
+                  onChange={handleChange}
+                  InputProps={{ inputProps: { min: 1 } }}
+                />
+              )}
 
               {/* UPDATED FLAVOR SELECTION */}
               {formData.category === "cake" && (
