@@ -10,7 +10,6 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-//const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const CreateCake = () => {
@@ -18,14 +17,14 @@ const CreateCake = () => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Builder State
   const [build, setBuild] = useState({
     shape: "Round Cake",
     flavor: "Chocolate",
     tiers: "1",
-    designProductId: null, // The ID of the cake chosen as "Design"
+    designProductId: null,
+    size: "",
     message: "",
-    notes: "",
+    notes: "", // Added size
   });
 
   const [alert, setAlert] = useState({
@@ -39,7 +38,6 @@ const CreateCake = () => {
     const fetchDesigns = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/products`);
-        // Only show CAKES as design options
         setDesigns(data.filter((p) => p.category === "cake"));
       } catch {
         console.error("Error fetching designs");
@@ -50,42 +48,44 @@ const CreateCake = () => {
     fetchDesigns();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setBuild({ ...build, [e.target.name]: e.target.value });
-  };
 
   const handleDesignSelect = (id) => {
-    setBuild({ ...build, designProductId: id });
+    const design = designs.find((d) => d._id === id);
+    // Auto-select the first available size if the design has sizes
+    setBuild({
+      ...build,
+      designProductId: id,
+      size: design?.sizes?.[0]?.size || "",
+    });
   };
 
   const addToCart = async () => {
-    if (!userInfo.token) {
-      setAlert({
+    if (!userInfo.token)
+      return setAlert({
         open: true,
         message: "Please login to order",
         severity: "error",
       });
-      return;
-    }
-    if (!build.designProductId) {
-      setAlert({
+    if (!build.designProductId)
+      return setAlert({
         open: true,
         message: "Please select a Cake Design",
         severity: "warning",
       });
-      return;
-    }
 
     try {
       await axios.post(
         `${API_URL}/cart`,
         {
-          productId: build.designProductId, // Use the design cake as the "Base Product"
+          productId: build.designProductId,
           quantity: 1,
           customization: {
             isCustomBuild: true,
             shape: build.shape,
             flavor: build.flavor,
+            size: build.size, // Pass size
             tiers: build.shape === "Tiered Cake" ? build.tiers : "N/A",
             message: build.message,
             notes: build.notes,
@@ -127,6 +127,14 @@ const CreateCake = () => {
     "Caramel",
   ];
 
+  // Calculate Price dynamically based on selected design and size
+  const selectedDesign = designs.find((d) => d._id === build.designProductId);
+  const availableSizes = selectedDesign?.sizes || [];
+  const activeSizeObj = availableSizes.find((s) => s.size === build.size);
+  const displayPrice = activeSizeObj
+    ? activeSizeObj.price
+    : selectedDesign?.price;
+
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
       <HomeHeader />
@@ -147,11 +155,35 @@ const CreateCake = () => {
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT: FORM */}
           <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit space-y-6 sticky top-6">
             <h3 className="font-bold text-lg text-gray-800 border-b pb-2">
               1. Build Specifications
             </h3>
+
+            {/* --- NEW SIZES DROPDOWN --- */}
+            <TextField
+              select
+              fullWidth
+              label="Cake Size"
+              name="size"
+              value={build.size}
+              onChange={handleChange}
+              disabled={!build.designProductId || availableSizes.length === 0}
+            >
+              {availableSizes.length > 0 ? (
+                availableSizes.map((s) => (
+                  <MenuItem key={s.size} value={s.size}>
+                    {s.size} - ₱{s.price}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem value="">
+                  {build.designProductId
+                    ? "Standard Size"
+                    : "Select a design first"}
+                </MenuItem>
+              )}
+            </TextField>
 
             <TextField
               select
@@ -220,6 +252,18 @@ const CreateCake = () => {
               onChange={handleChange}
             />
 
+            {/* --- DISPLAY DYNAMIC PRICE --- */}
+            {build.designProductId && (
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                  Base Price
+                </span>
+                <span className="text-2xl font-black text-amber-600">
+                  ₱ {displayPrice}
+                </span>
+              </div>
+            )}
+
             <Button
               variant="contained"
               size="large"
@@ -236,7 +280,6 @@ const CreateCake = () => {
             </Button>
           </div>
 
-          {/* RIGHT: DESIGN SELECTOR */}
           <div className="lg:col-span-2">
             <h3 className="font-bold text-lg text-gray-800 mb-4">
               2. Select a Design Reference
@@ -254,9 +297,7 @@ const CreateCake = () => {
                   <div
                     key={design._id}
                     onClick={() => handleDesignSelect(design._id)}
-                    className={`cursor-pointer rounded-xl overflow-hidden border-2 transition relative group
-                                    ${build.designProductId === design._id ? "border-amber-500 ring-2 ring-amber-200" : "border-transparent hover:border-gray-300"}
-                                `}
+                    className={`cursor-pointer rounded-xl overflow-hidden border-2 transition relative group ${build.designProductId === design._id ? "border-amber-500 ring-2 ring-amber-200" : "border-transparent hover:border-gray-300"}`}
                   >
                     <img
                       src={design.image}
@@ -283,5 +324,4 @@ const CreateCake = () => {
     </div>
   );
 };
-
 export default CreateCake;

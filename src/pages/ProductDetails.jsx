@@ -19,6 +19,9 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+
+  // Customization State
+  const [selectedSize, setSelectedSize] = useState("");
   const [customization, setCustomization] = useState({
     message: "",
     tiers: "1",
@@ -37,6 +40,9 @@ const ProductDetails = () => {
       try {
         const { data } = await axios.get(`${API_URL}/products/${id}`);
         setProduct(data);
+        // Default to first size if available
+        if (data.sizes && data.sizes.length > 0)
+          setSelectedSize(data.sizes[0].size);
       } catch {
         console.error("Error fetching product");
       } finally {
@@ -67,6 +73,7 @@ const ProductDetails = () => {
             product.category === "cake"
               ? {
                   ...customization,
+                  size: selectedSize,
                   flavor: product.flavor,
                   shape: product.subCategory,
                   isCustomBuild: false,
@@ -79,7 +86,7 @@ const ProductDetails = () => {
         open: true,
         message: "Added to reservation!",
         severity: "success",
-      }); // CHANGED
+      });
     } catch {
       setAlert({ open: true, message: "Failed to reserve", severity: "error" });
     }
@@ -93,6 +100,10 @@ const ProductDetails = () => {
     );
   if (!product)
     return <div className="text-center mt-20">Product not found.</div>;
+
+  // Calculate live price
+  const activeSizeObj = product.sizes?.find((s) => s.size === selectedSize);
+  const displayPrice = activeSizeObj ? activeSizeObj.price : product.price;
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
@@ -141,8 +152,8 @@ const ProductDetails = () => {
               )}
             </div>
 
-            <p className="text-2xl font-bold text-red-500 mb-4">
-              ₱ {product.price}
+            <p className="text-3xl font-black text-red-500 mb-4">
+              ₱ {displayPrice}
               {product.category === "bakery" && (
                 <span className="text-sm text-gray-500 font-normal ml-2">
                   / pack of {product.piecesPerPack || 1}
@@ -158,6 +169,25 @@ const ProductDetails = () => {
                 <h3 className="font-bold text-gray-800 border-b pb-2 mb-2">
                   Personalize Your Cake
                 </h3>
+
+                {product.sizes && product.sizes.length > 0 && (
+                  <TextField
+                    select
+                    fullWidth
+                    label="Select Size"
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    size="small"
+                    sx={{ mb: 2 }}
+                  >
+                    {product.sizes.map((s) => (
+                      <MenuItem key={s.size} value={s.size}>
+                        {s.size}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+
                 <TextField
                   fullWidth
                   label="Dedication Message"

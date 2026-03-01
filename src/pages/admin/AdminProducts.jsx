@@ -44,6 +44,9 @@ const AdminProducts = () => {
     piecesPerPack: 1,
   });
 
+  // --- NEW: SIZES STATE ---
+  const [sizes, setSizes] = useState([]);
+
   const [restockData, setRestockData] = useState({
     id: null,
     name: "",
@@ -97,11 +100,8 @@ const AdminProducts = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // NEW: Restrict to 2MB to prevent upload crashes
-      if (file.size > 2 * 1024 * 1024) {
-        alert("File size exceeds 2MB. Please upload a smaller image.");
-        return;
-      }
+      if (file.size > 2 * 1024 * 1024)
+        return alert("File size exceeds 2MB. Please upload a smaller image.");
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -109,9 +109,17 @@ const AdminProducts = () => {
 
   const handleChange = (e) => {
     let value = e.target.value;
-    // NEW: Prevent negative numbers on the frontend directly
     if (e.target.type === "number" && Number(value) < 0) value = 0;
     setFormData({ ...formData, [e.target.name]: value });
+  };
+
+  // --- SIZES LOGIC ---
+  const addSize = () => setSizes([...sizes, { size: "", price: "" }]);
+  const removeSize = (index) => setSizes(sizes.filter((_, i) => i !== index));
+  const handleSizeChange = (index, field, value) => {
+    const newSizes = [...sizes];
+    newSizes[index][field] = value;
+    setSizes(newSizes);
   };
 
   const openRestockModal = (product) => {
@@ -159,6 +167,12 @@ const AdminProducts = () => {
     data.append("category", formData.category);
     data.append("piecesPerPack", Number(formData.piecesPerPack) || 1);
 
+    // Clean and append sizes
+    const validSizes = sizes.filter(
+      (s) => s.size.trim() !== "" && s.price !== "",
+    );
+    data.append("sizes", JSON.stringify(validSizes));
+
     if (formData.category === "cake") {
       if (formData.subCategory)
         data.append("subCategory", formData.subCategory);
@@ -185,7 +199,7 @@ const AdminProducts = () => {
       fetchProducts();
       resetForm();
     } catch {
-      alert("Error saving product. Please check your inputs.");
+      alert("Error saving product.");
     } finally {
       setSubmitting(false);
     }
@@ -217,6 +231,7 @@ const AdminProducts = () => {
       countInStock: product.countInStock,
       piecesPerPack: product.piecesPerPack || 1,
     });
+    setSizes(product.sizes || []); // Load existing sizes
     setImagePreview(product.image);
     setImageFile(null);
     setOpen(true);
@@ -235,6 +250,7 @@ const AdminProducts = () => {
       countInStock: 0,
       piecesPerPack: 1,
     });
+    setSizes([]);
     setImageFile(null);
     setImagePreview("");
   };
@@ -326,14 +342,14 @@ const AdminProducts = () => {
                         {product.piecesPerPack} pcs / pack
                       </p>
                     )}
-                    {product.subCategory && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {product.subCategory}
-                      </p>
-                    )}
                   </td>
                   <td className="p-4 font-mono font-bold text-gray-700">
-                    ₱ {product.price}
+                    ₱ {product.price}{" "}
+                    {product.sizes?.length > 0 && (
+                      <span className="text-[10px] text-gray-400 block">
+                        + {product.sizes.length} sizes
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 text-center">
                     <div className="flex flex-col items-center gap-1">
@@ -432,7 +448,7 @@ const AdminProducts = () => {
               />
               <div className="grid grid-cols-2 gap-4">
                 <TextField
-                  label="Price"
+                  label="Base Price"
                   name="price"
                   type="number"
                   fullWidth
@@ -479,7 +495,6 @@ const AdminProducts = () => {
                     InputProps={{ inputProps: { min: 1 } }}
                   />
                 )}
-
                 {formData.category === "cake" && (
                   <TextField
                     select
@@ -497,21 +512,77 @@ const AdminProducts = () => {
                   </TextField>
                 )}
               </div>
+
               {formData.category === "cake" && (
-                <TextField
-                  select
-                  label="Cake Flavor"
-                  name="flavor"
-                  fullWidth
-                  value={formData.flavor}
-                  onChange={handleChange}
-                >
-                  {cakeFlavors.map((f) => (
-                    <MenuItem key={f} value={f}>
-                      {f}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                <>
+                  <TextField
+                    select
+                    label="Cake Flavor"
+                    name="flavor"
+                    fullWidth
+                    value={formData.flavor}
+                    onChange={handleChange}
+                  >
+                    {cakeFlavors.map((f) => (
+                      <MenuItem key={f} value={f}>
+                        {f}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  {/* --- SIZES UI --- */}
+                  <div className="border border-gray-200 p-4 rounded-xl bg-gray-50 shadow-sm mt-2">
+                    <h4 className="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
+                      <AddCircleOutlineIcon fontSize="small" /> Cake Sizes &
+                      Prices
+                    </h4>
+                    {sizes.map((s, index) => (
+                      <div key={index} className="flex gap-2 mb-3">
+                        <TextField
+                          size="small"
+                          label="Size (e.g. 6 inches)"
+                          value={s.size}
+                          onChange={(e) =>
+                            handleSizeChange(index, "size", e.target.value)
+                          }
+                          fullWidth
+                        />
+                        <TextField
+                          size="small"
+                          type="number"
+                          label="Price"
+                          value={s.price}
+                          onChange={(e) =>
+                            handleSizeChange(index, "price", e.target.value)
+                          }
+                          fullWidth
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                ₱
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                        <Button color="error" onClick={() => removeSize(index)}>
+                          <CloseIcon />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={addSize}
+                      sx={{ fontWeight: "bold", textTransform: "none" }}
+                    >
+                      + Add Size Option
+                    </Button>
+                    <p className="text-[10px] text-gray-500 mt-2">
+                      * If no sizes are added, the Base Price above will be
+                      used.
+                    </p>
+                  </div>
+                </>
               )}
               <TextField
                 label="Description"
@@ -536,38 +607,6 @@ const AdminProducts = () => {
             sx={{ bgcolor: "#111827" }}
           >
             {submitting ? "Saving..." : "Save Product"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={restockOpen}
-        onClose={() => setRestockOpen(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Add Daily Slots</DialogTitle>
-        <DialogContent className="pt-4">
-          <p className="mb-4">
-            Add daily capacity for: <b>{restockData.name}</b>
-          </p>
-          <TextField
-            label="Additional Slots"
-            type="number"
-            fullWidth
-            autoFocus
-            value={restockData.addAmount}
-            onChange={(e) => {
-              if (Number(e.target.value) >= 0)
-                setRestockData({ ...restockData, addAmount: e.target.value });
-            }}
-            InputProps={{ inputProps: { min: 1 } }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRestockOpen(false)}>Cancel</Button>
-          <Button onClick={submitRestock} variant="contained">
-            Confirm
           </Button>
         </DialogActions>
       </Dialog>

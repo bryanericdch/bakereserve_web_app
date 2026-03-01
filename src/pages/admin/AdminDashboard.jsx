@@ -570,6 +570,7 @@ const AdminDashboard = () => {
       )}
 
       {/* --- ORDER DETAILS MODAL --- */}
+      {/* --- ORDER DETAILS MODAL --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
@@ -626,20 +627,37 @@ const AdminDashboard = () => {
                 {selectedOrder.orderItems.map((item, idx) => (
                   <div
                     key={idx}
-                    className="bg-white border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row gap-4"
+                    className="bg-white border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-start"
                   >
-                    <div className="flex-1">
-                      <h5 className="font-bold text-gray-800 text-lg">
-                        <span className="text-amber-500 mr-2">
-                          {item.quantity}x
-                        </span>
-                        {item.name}
-                      </h5>
+                    {/* --- NEW: DISPLAY PRODUCT IMAGE --- */}
+                    {item.product?.image ? (
+                      <img
+                        src={item.product.image}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 bg-gray-100 rounded-lg border flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase text-center p-2">
+                        No Image
+                      </div>
+                    )}
+
+                    <div className="flex-1 w-full">
+                      <div className="flex justify-between items-start">
+                        <h5 className="font-bold text-gray-800 text-lg">
+                          <span className="text-amber-500 mr-2">
+                            {item.quantity}x
+                          </span>
+                          {item.name}
+                        </h5>
+                        <p className="font-bold text-gray-800 text-lg">
+                          ₱{(item.price * item.quantity).toLocaleString()}
+                        </p>
+                      </div>
                       <p className="text-sm text-gray-500 mb-2">
                         Price per unit: ₱{item.price}
                       </p>
 
-                      {/* Show Customizations if they exist */}
                       {item.customization &&
                         Object.keys(item.customization).length > 0 && (
                           <div className="bg-purple-50 border border-purple-100 p-3 rounded-lg mt-2">
@@ -657,6 +675,12 @@ const AdminDashboard = () => {
                                   <b>Shape:</b> {item.customization.shape}
                                 </li>
                               )}
+                              {item.customization.size && (
+                                <li>
+                                  <b>Size:</b> {item.customization.size}
+                                </li>
+                              )}{" "}
+                              {/* Size Added Here */}
                               {item.customization.tiers &&
                                 item.customization.tiers !== "N/A" && (
                                   <li>
@@ -677,11 +701,6 @@ const AdminDashboard = () => {
                             </ul>
                           </div>
                         )}
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-800">
-                        ₱{(item.price * item.quantity).toLocaleString()}
-                      </p>
                     </div>
                   </div>
                 ))}
