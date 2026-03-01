@@ -5,7 +5,6 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import IconButton from "@mui/material/IconButton";
-import Divider from "@mui/material/Divider";
 
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
@@ -27,15 +26,15 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // NEW: Tracks which button is processing
 
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all"); // NEW: Date Filter
+  const [dateFilter, setDateFilter] = useState("all");
   const [statsPeriod, setStatsPeriod] = useState("month");
   const [rankSort, setRankSort] = useState("highest");
 
-  // Modal State
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -57,11 +56,9 @@ const AdminDashboard = () => {
   }, []);
 
   const getCount = (status) => {
-    const filteredByType = orders.filter((o) => {
-      if (typeFilter !== "all" && o.orderType !== typeFilter) return false;
-      return true;
-    });
-
+    const filteredByType = orders.filter((o) =>
+      typeFilter === "all" ? true : o.orderType === typeFilter,
+    );
     if (status === "all") return filteredByType.length;
     if (status === "rejected_cancelled")
       return filteredByType.filter((o) =>
@@ -116,33 +113,44 @@ const AdminDashboard = () => {
   ];
 
   const updateStatus = async (id, status) => {
-    const action = status === "rejected" ? "reject" : "mark as " + status;
-    if (!window.confirm(`Are you sure you want to ${action} this order?`))
+    const actionName =
+      status === "rejected"
+        ? "reject"
+        : status === "cancelled"
+          ? "cancel"
+          : "update";
+    if (!window.confirm(`Are you sure you want to ${actionName} this order?`))
       return;
+
+    setActionLoading(id); // Start button spinner
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
-      fetchOrders();
+      await fetchOrders();
       if (selectedOrder && selectedOrder._id === id) {
         setSelectedOrder({ ...selectedOrder, orderStatus: status });
       }
-    } catch {
-      alert("Update failed");
+    } catch (error) {
+      console.error(error);
+      alert(
+        error.response?.data?.message ||
+          "Failed to update order status. Please try again.",
+      );
+    } finally {
+      setActionLoading(null); // Stop button spinner
     }
   };
 
   const getManageOrders = () => {
     const now = new Date();
     return orders.filter((order) => {
-      // Status Filter
       if (statusTab === "rejected") {
         if (!["rejected", "cancelled"].includes(order.orderStatus))
           return false;
-      } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
+      } else if (statusTab !== "all" && order.orderStatus !== statusTab)
         return false;
-      }
-      // Type Filter
+
       if (typeFilter !== "all" && order.orderType !== typeFilter) return false;
-      // Date Filter
+
       const orderDate = new Date(order.createdAt);
       if (
         dateFilter === "today" &&
@@ -181,7 +189,6 @@ const AdminDashboard = () => {
 
     completed.forEach((order) => {
       order.orderItems.forEach((item) => {
-        // Using item.name since product reference might be deleted
         if (order.orderType === "cake" || order.orderType === "custom_cake") {
           const key = item.customization?.shape || item.name;
           cakeMap[key] = (cakeMap[key] || 0) + item.quantity;
@@ -350,8 +357,8 @@ const AdminDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 min-w-[200px]">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end justify-between min-w-[200px]">
+                    <div className="flex items-center gap-3 mb-2">
                       <button
                         onClick={() => setSelectedOrder(order)}
                         className="text-gray-500 hover:text-blue-600 flex items-center gap-1 text-xs font-bold transition-colors"
@@ -362,48 +369,81 @@ const AdminDashboard = () => {
                         ₱ {order.totalPrice.toLocaleString()}
                       </p>
                     </div>
-                    {order.orderStatus === "pending" && (
-                      <div className="flex gap-2 w-full">
+
+                    {/* --- UPDATED PROCESSING BUTTONS --- */}
+                    <div className="flex gap-2 w-full">
+                      {order.orderStatus === "pending" && (
                         <button
                           onClick={() => updateStatus(order._id, "approved")}
-                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition"
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition disabled:opacity-50"
                         >
-                          APPROVE
+                          {actionLoading === order._id ? "..." : "APPROVE"}
                         </button>
+                      )}
+                      {order.orderStatus === "approved" && (
                         <button
-                          onClick={() => updateStatus(order._id, "rejected")}
-                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition"
+                          onClick={() => updateStatus(order._id, "in_process")}
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition disabled:opacity-50"
+                        >
+                          {actionLoading === order._id
+                            ? "..."
+                            : "START PROCESS"}
+                        </button>
+                      )}
+                      {order.orderStatus === "in_process" && (
+                        <button
+                          onClick={() =>
+                            updateStatus(order._id, "ready_for_pickup")
+                          }
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition disabled:opacity-50"
+                        >
+                          {actionLoading === order._id
+                            ? "..."
+                            : "READY FOR PICKUP"}
+                        </button>
+                      )}
+                      {order.orderStatus === "ready_for_pickup" && (
+                        <button
+                          onClick={() => updateStatus(order._id, "completed")}
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50"
+                        >
+                          {actionLoading === order._id ? "..." : "COMPLETE"}
+                        </button>
+                      )}
+
+                      {/* --- CANCEL BUTTON FOR ALL ACTIVE STAGES --- */}
+                      {[
+                        "pending",
+                        "approved",
+                        "in_process",
+                        "ready_for_pickup",
+                      ].includes(order.orderStatus) && (
+                        <button
+                          onClick={() =>
+                            updateStatus(
+                              order._id,
+                              order.orderStatus === "pending"
+                                ? "rejected"
+                                : "cancelled",
+                            )
+                          }
+                          disabled={actionLoading === order._id}
+                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center"
+                          title={
+                            order.orderStatus === "pending"
+                              ? "Reject Order"
+                              : "Cancel Order"
+                          }
                         >
                           <CancelOutlinedIcon fontSize="small" />
                         </button>
-                      </div>
-                    )}
-                    {order.orderStatus === "approved" && (
-                      <button
-                        onClick={() => updateStatus(order._id, "in_process")}
-                        className="w-full bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition"
-                      >
-                        START PROCESS
-                      </button>
-                    )}
-                    {order.orderStatus === "in_process" && (
-                      <button
-                        onClick={() =>
-                          updateStatus(order._id, "ready_for_pickup")
-                        }
-                        className="w-full bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition"
-                      >
-                        READY FOR PICKUP
-                      </button>
-                    )}
-                    {order.orderStatus === "ready_for_pickup" && (
-                      <button
-                        onClick={() => updateStatus(order._id, "completed")}
-                        className="w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition"
-                      >
-                        COMPLETE ORDER
-                      </button>
-                    )}
+                      )}
+                    </div>
+
                     {["completed", "rejected", "cancelled"].includes(
                       order.orderStatus,
                     ) && (
@@ -570,7 +610,6 @@ const AdminDashboard = () => {
       )}
 
       {/* --- ORDER DETAILS MODAL --- */}
-      {/* --- ORDER DETAILS MODAL --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
@@ -629,7 +668,6 @@ const AdminDashboard = () => {
                     key={idx}
                     className="bg-white border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-start"
                   >
-                    {/* --- NEW: DISPLAY PRODUCT IMAGE --- */}
                     {item.product?.image ? (
                       <img
                         src={item.product.image}
@@ -641,7 +679,6 @@ const AdminDashboard = () => {
                         No Image
                       </div>
                     )}
-
                     <div className="flex-1 w-full">
                       <div className="flex justify-between items-start">
                         <h5 className="font-bold text-gray-800 text-lg">
@@ -657,7 +694,6 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-500 mb-2">
                         Price per unit: ₱{item.price}
                       </p>
-
                       {item.customization &&
                         Object.keys(item.customization).length > 0 && (
                           <div className="bg-purple-50 border border-purple-100 p-3 rounded-lg mt-2">
@@ -679,8 +715,7 @@ const AdminDashboard = () => {
                                 <li>
                                   <b>Size:</b> {item.customization.size}
                                 </li>
-                              )}{" "}
-                              {/* Size Added Here */}
+                              )}
                               {item.customization.tiers &&
                                 item.customization.tiers !== "N/A" && (
                                   <li>
