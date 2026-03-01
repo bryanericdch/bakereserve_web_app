@@ -44,9 +44,7 @@ const AdminProducts = () => {
     piecesPerPack: 1,
   });
 
-  // --- NEW: SIZES STATE ---
   const [sizes, setSizes] = useState([]);
-
   const [restockData, setRestockData] = useState({
     id: null,
     name: "",
@@ -113,7 +111,6 @@ const AdminProducts = () => {
     setFormData({ ...formData, [e.target.name]: value });
   };
 
-  // --- SIZES LOGIC ---
   const addSize = () => setSizes([...sizes, { size: "", price: "" }]);
   const removeSize = (index) => setSizes(sizes.filter((_, i) => i !== index));
   const handleSizeChange = (index, field, value) => {
@@ -167,10 +164,13 @@ const AdminProducts = () => {
     data.append("category", formData.category);
     data.append("piecesPerPack", Number(formData.piecesPerPack) || 1);
 
-    // Clean and append sizes
-    const validSizes = sizes.filter(
-      (s) => s.size.trim() !== "" && s.price !== "",
-    );
+    const validSizes = sizes
+      .filter((s) => s.size.trim() !== "" && s.price !== "")
+      .map((s) => {
+        let sizeStr = s.size.trim();
+        if (!sizeStr.toLowerCase().includes("inch")) sizeStr += "inch";
+        return { size: sizeStr, price: Number(s.price) };
+      });
     data.append("sizes", JSON.stringify(validSizes));
 
     if (formData.category === "cake") {
@@ -231,7 +231,7 @@ const AdminProducts = () => {
       countInStock: product.countInStock,
       piecesPerPack: product.piecesPerPack || 1,
     });
-    setSizes(product.sizes || []); // Load existing sizes
+    setSizes(product.sizes || []);
     setImagePreview(product.image);
     setImageFile(null);
     setOpen(true);
@@ -530,17 +530,16 @@ const AdminProducts = () => {
                     ))}
                   </TextField>
 
-                  {/* --- SIZES UI --- */}
                   <div className="border border-gray-200 p-4 rounded-xl bg-gray-50 shadow-sm mt-2">
                     <h4 className="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
                       <AddCircleOutlineIcon fontSize="small" /> Cake Sizes &
-                      Prices
+                      Additional Prices
                     </h4>
                     {sizes.map((s, index) => (
                       <div key={index} className="flex gap-2 mb-3">
                         <TextField
                           size="small"
-                          label="Size (e.g. 6 inches)"
+                          label="Size (e.g. 12)"
                           value={s.size}
                           onChange={(e) =>
                             handleSizeChange(index, "size", e.target.value)
@@ -550,7 +549,7 @@ const AdminProducts = () => {
                         <TextField
                           size="small"
                           type="number"
-                          label="Price"
+                          label="Add'l Price (+)"
                           value={s.price}
                           onChange={(e) =>
                             handleSizeChange(index, "price", e.target.value)
@@ -578,8 +577,8 @@ const AdminProducts = () => {
                       + Add Size Option
                     </Button>
                     <p className="text-[10px] text-gray-500 mt-2">
-                      * If no sizes are added, the Base Price above will be
-                      used.
+                      * Size prices are added to the Base Price. "inch" will
+                      automatically append.
                     </p>
                   </div>
                 </>

@@ -20,7 +20,6 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
-  // Customization State
   const [selectedSize, setSelectedSize] = useState("");
   const [customization, setCustomization] = useState({
     message: "",
@@ -40,7 +39,6 @@ const ProductDetails = () => {
       try {
         const { data } = await axios.get(`${API_URL}/products/${id}`);
         setProduct(data);
-        // Default to first size if available
         if (data.sizes && data.sizes.length > 0)
           setSelectedSize(data.sizes[0].size);
       } catch {
@@ -101,9 +99,9 @@ const ProductDetails = () => {
   if (!product)
     return <div className="text-center mt-20">Product not found.</div>;
 
-  // Calculate live price
   const activeSizeObj = product.sizes?.find((s) => s.size === selectedSize);
-  const displayPrice = activeSizeObj ? activeSizeObj.price : product.price;
+  const displayPrice =
+    product.price + (activeSizeObj ? activeSizeObj.price : 0);
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
@@ -182,7 +180,7 @@ const ProductDetails = () => {
                   >
                     {product.sizes.map((s) => (
                       <MenuItem key={s.size} value={s.size}>
-                        {s.size}
+                        {s.size} (+ ₱{s.price})
                       </MenuItem>
                     ))}
                   </TextField>

@@ -24,7 +24,7 @@ const CreateCake = () => {
     designProductId: null,
     size: "",
     message: "",
-    notes: "", // Added size
+    notes: "",
   });
 
   const [alert, setAlert] = useState({
@@ -53,7 +53,6 @@ const CreateCake = () => {
 
   const handleDesignSelect = (id) => {
     const design = designs.find((d) => d._id === id);
-    // Auto-select the first available size if the design has sizes
     setBuild({
       ...build,
       designProductId: id,
@@ -85,7 +84,7 @@ const CreateCake = () => {
             isCustomBuild: true,
             shape: build.shape,
             flavor: build.flavor,
-            size: build.size, // Pass size
+            size: build.size,
             tiers: build.shape === "Tiered Cake" ? build.tiers : "N/A",
             message: build.message,
             notes: build.notes,
@@ -127,13 +126,11 @@ const CreateCake = () => {
     "Caramel",
   ];
 
-  // Calculate Price dynamically based on selected design and size
   const selectedDesign = designs.find((d) => d._id === build.designProductId);
   const availableSizes = selectedDesign?.sizes || [];
   const activeSizeObj = availableSizes.find((s) => s.size === build.size);
-  const displayPrice = activeSizeObj
-    ? activeSizeObj.price
-    : selectedDesign?.price;
+  const displayPrice =
+    (selectedDesign?.price || 0) + (activeSizeObj ? activeSizeObj.price : 0);
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
@@ -160,7 +157,6 @@ const CreateCake = () => {
               1. Build Specifications
             </h3>
 
-            {/* --- NEW SIZES DROPDOWN --- */}
             <TextField
               select
               fullWidth
@@ -173,7 +169,7 @@ const CreateCake = () => {
               {availableSizes.length > 0 ? (
                 availableSizes.map((s) => (
                   <MenuItem key={s.size} value={s.size}>
-                    {s.size} - ₱{s.price}
+                    {s.size} (+ ₱{s.price})
                   </MenuItem>
                 ))
               ) : (
@@ -252,11 +248,10 @@ const CreateCake = () => {
               onChange={handleChange}
             />
 
-            {/* --- DISPLAY DYNAMIC PRICE --- */}
             {build.designProductId && (
               <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 flex justify-between items-center">
                 <span className="text-sm font-bold text-gray-700 uppercase tracking-widest">
-                  Base Price
+                  Total Price
                 </span>
                 <span className="text-2xl font-black text-amber-600">
                   ₱ {displayPrice}
