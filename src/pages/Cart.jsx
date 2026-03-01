@@ -16,7 +16,6 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Cart = () => {
@@ -28,9 +27,8 @@ const Cart = () => {
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
 
-  // Payment State
   const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [eWalletType, setEWalletType] = useState("gcash"); // 'gcash' or 'paymaya'
+  const [eWalletType, setEWalletType] = useState("gcash");
 
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -114,7 +112,6 @@ const Cart = () => {
 
     setProcessing(true);
     try {
-      // 1. Create the base Orders
       const orderPayload = {
         pickupDate,
         pickupTime,
@@ -129,16 +126,13 @@ const Cart = () => {
       const createdOrders = orderData.orders;
       const orderIds = createdOrders.map((o) => o._id);
 
-      // 2. If Cash on Delivery, we are done.
       if (paymentMethod === "cod") {
         alert("Order placed successfully via Cash on Delivery!");
         navigate("/orders");
         return;
       }
 
-      // 3. If E-Wallet, process PayMongo Flow
       if (paymentMethod === "ewallet") {
-        // A. Create Intent (Pass Array of IDs)
         const intentRes = await axios.post(
           `${API_URL}/payments/intent`,
           { orderIds },
@@ -146,7 +140,6 @@ const Cart = () => {
         );
         const paymentIntentId = intentRes.data.data.id;
 
-        // B. Create Method (GCash or PayMaya)
         const methodRes = await axios.post(
           `${API_URL}/payments/method`,
           { type: eWalletType },
@@ -154,24 +147,17 @@ const Cart = () => {
         );
         const paymentMethodId = methodRes.data.data.id;
 
-        // C. Attach and Confirm
         const returnUrl = `${window.location.origin}/payment/status`;
         const confirmRes = await axios.post(
           `${API_URL}/payments/confirm`,
-          {
-            paymentIntentId,
-            paymentMethodId,
-            returnUrl,
-          },
+          { paymentIntentId, paymentMethodId, returnUrl },
           config,
         );
 
-        // D. Redirect user to PayMongo Auth URL
         const nextAction = confirmRes.data.data.attributes.next_action;
         if (nextAction && nextAction.type === "redirect") {
           window.location.href = nextAction.redirect.url;
         } else {
-          // Automatically succeeded (rare for e-wallets, but possible)
           navigate("/payment/status?status=succeeded");
         }
       }
@@ -237,17 +223,47 @@ const Cart = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
+
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-800">{item.name}</h3>
-                    {item.customization?.flavor && (
-                      <p className="text-xs text-gray-500">
-                        Custom: {item.customization.flavor}
-                      </p>
-                    )}
-                    <p className="text-red-500 font-bold text-sm">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-gray-800">{item.name}</h3>
+
+                      {/* --- CLEAR UI BADGES --- */}
+                      {item.customization?.isCustomBuild ? (
+                        <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-purple-200">
+                          Custom Build
+                        </span>
+                      ) : item.customization?.message ? (
+                        <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-pink-200">
+                          Personalized
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="text-xs text-gray-500 mt-1 space-x-2">
+                      {item.customization?.flavor && (
+                        <span>
+                          Flavor:{" "}
+                          <span className="font-semibold text-gray-700">
+                            {item.customization.flavor}
+                          </span>
+                        </span>
+                      )}
+                      {item.customization?.size && (
+                        <span>
+                          | Size:{" "}
+                          <span className="font-semibold text-gray-700">
+                            {item.customization.size}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-red-500 font-bold text-sm mt-1">
                       ₱ {item.price.toFixed(2)}
                     </p>
                   </div>
+
                   <div className="flex items-center gap-4">
                     <div className="flex items-center border border-gray-200 rounded-lg bg-white">
                       <button
@@ -316,7 +332,6 @@ const Cart = () => {
 
               <Divider className="mb-4" />
 
-              {/* PAYMENT SELECTION */}
               <div className="mb-6">
                 <FormControl component="fieldset">
                   <FormLabel
@@ -394,5 +409,4 @@ const Cart = () => {
     </div>
   );
 };
-
 export default Cart;
