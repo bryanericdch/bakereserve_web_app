@@ -26,7 +26,6 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // NEW: Tracks which button is processing
 
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
@@ -122,21 +121,17 @@ const AdminDashboard = () => {
     if (!window.confirm(`Are you sure you want to ${actionName} this order?`))
       return;
 
-    setActionLoading(id); // Start button spinner
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
-      await fetchOrders();
+      fetchOrders();
       if (selectedOrder && selectedOrder._id === id) {
         setSelectedOrder({ ...selectedOrder, orderStatus: status });
       }
     } catch (error) {
       console.error(error);
       alert(
-        error.response?.data?.message ||
-          "Failed to update order status. Please try again.",
+        `Update failed: ${error.response?.data?.message || "Server Error"}`,
       );
-    } finally {
-      setActionLoading(null); // Stop button spinner
     }
   };
 
@@ -357,8 +352,8 @@ const AdminDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end justify-between min-w-[200px]">
-                    <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-col items-end gap-2 min-w-[200px]">
+                    <div className="flex items-center gap-3 w-full justify-between">
                       <button
                         onClick={() => setSelectedOrder(order)}
                         className="text-gray-500 hover:text-blue-600 flex items-center gap-1 text-xs font-bold transition-colors"
@@ -370,26 +365,22 @@ const AdminDashboard = () => {
                       </p>
                     </div>
 
-                    {/* --- UPDATED PROCESSING BUTTONS --- */}
-                    <div className="flex gap-2 w-full">
+                    {/* --- ACTION BUTTONS --- */}
+                    <div className="flex gap-2 w-full mt-2">
                       {order.orderStatus === "pending" && (
                         <button
                           onClick={() => updateStatus(order._id, "approved")}
-                          disabled={actionLoading === order._id}
-                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition"
                         >
-                          {actionLoading === order._id ? "..." : "APPROVE"}
+                          APPROVE
                         </button>
                       )}
                       {order.orderStatus === "approved" && (
                         <button
                           onClick={() => updateStatus(order._id, "in_process")}
-                          disabled={actionLoading === order._id}
-                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition"
                         >
-                          {actionLoading === order._id
-                            ? "..."
-                            : "START PROCESS"}
+                          START PROCESS
                         </button>
                       )}
                       {order.orderStatus === "in_process" && (
@@ -397,25 +388,21 @@ const AdminDashboard = () => {
                           onClick={() =>
                             updateStatus(order._id, "ready_for_pickup")
                           }
-                          disabled={actionLoading === order._id}
-                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition"
                         >
-                          {actionLoading === order._id
-                            ? "..."
-                            : "READY FOR PICKUP"}
+                          READY FOR PICKUP
                         </button>
                       )}
                       {order.orderStatus === "ready_for_pickup" && (
                         <button
                           onClick={() => updateStatus(order._id, "completed")}
-                          disabled={actionLoading === order._id}
-                          className="flex-1 bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition"
                         >
-                          {actionLoading === order._id ? "..." : "COMPLETE"}
+                          COMPLETE
                         </button>
                       )}
 
-                      {/* --- CANCEL BUTTON FOR ALL ACTIVE STAGES --- */}
+                      {/* Cancel / Reject Button for ALL Active Stages */}
                       {[
                         "pending",
                         "approved",
@@ -431,8 +418,7 @@ const AdminDashboard = () => {
                                 : "cancelled",
                             )
                           }
-                          disabled={actionLoading === order._id}
-                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center"
+                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition flex items-center justify-center"
                           title={
                             order.orderStatus === "pending"
                               ? "Reject Order"

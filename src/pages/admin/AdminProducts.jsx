@@ -25,7 +25,6 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null); // NEW: Tracks deletion processing
   const [activeTab, setActiveTab] = useState("all");
 
   const [open, setOpen] = useState(false);
@@ -179,6 +178,7 @@ const AdminProducts = () => {
         data.append("subCategory", formData.subCategory);
       if (formData.flavor) data.append("flavor", formData.flavor);
     }
+
     if (imageFile) data.append("image", imageFile);
 
     try {
@@ -196,7 +196,7 @@ const AdminProducts = () => {
         );
       else await axios.post(`${API_URL}/products`, data, uploadConfig);
       setOpen(false);
-      await fetchProducts();
+      fetchProducts();
       resetForm();
     } catch {
       alert("Error saving product.");
@@ -210,19 +210,14 @@ const AdminProducts = () => {
       !window.confirm("Delete this product? It will be hidden from the store.")
     )
       return;
-
-    setDeletingId(id); // Show spinner
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
-      await fetchProducts();
+      fetchProducts();
     } catch (error) {
       console.error(error);
       alert(
-        error.response?.data?.message ||
-          "Failed to delete product. Please try again.",
+        `Failed to delete: ${error.response?.data?.message || "Server Error"}`,
       );
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -381,20 +376,14 @@ const AdminProducts = () => {
                     <IconButton
                       color="primary"
                       onClick={() => openEditModal(product)}
-                      disabled={deletingId === product._id}
                     >
                       <EditOutlinedIcon />
                     </IconButton>
                     <IconButton
                       color="error"
                       onClick={() => handleDelete(product._id)}
-                      disabled={deletingId === product._id}
                     >
-                      {deletingId === product._id ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <DeleteOutlineIcon />
-                      )}
+                      <DeleteOutlineIcon />
                     </IconButton>
                   </td>
                 </tr>
@@ -497,6 +486,7 @@ const AdminProducts = () => {
                   <MenuItem value="bakery">Bread / Bakery</MenuItem>
                   <MenuItem value="cake">Cake</MenuItem>
                 </TextField>
+
                 {formData.category === "bakery" && (
                   <TextField
                     label="Pieces per Pack"
