@@ -13,6 +13,9 @@ import AboutUs from "../pages/AboutUs";
 import VerifyEmail from "../pages/VerifyEmail";
 import ForgotPassword from "../pages/ForgotPassword";
 
+// --- NEW IMPORT ---
+import ResetPassword from "../pages/ResetPassword";
+
 // Admin Imports
 import AdminRoute from "../components/AdminRoute";
 import AdminLayout from "../components/AdminLayout";
@@ -28,6 +31,9 @@ const AppRoutes = () => {
       <Route path="/verify-email/:token" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
+      {/* --- NEW ROUTE --- */}
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+
       {/* Customer Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
@@ -37,7 +43,6 @@ const AppRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/payment/status" element={<PaymentStatus />} />
 
-        {/* --- ADD THESE MISSING ROUTES --- */}
         <Route path="/create-cake" element={<CreateCake />} />
         <Route path="/product/:id" element={<ProductDetails />} />
       </Route>
