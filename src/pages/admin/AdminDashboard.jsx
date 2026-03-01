@@ -26,7 +26,7 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // NEW: Tracks which button is processing
+  const [actionLoading, setActionLoading] = useState(null);
 
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
@@ -113,16 +113,8 @@ const AdminDashboard = () => {
   ];
 
   const updateStatus = async (id, status) => {
-    const actionName =
-      status === "rejected"
-        ? "reject"
-        : status === "cancelled"
-          ? "cancel"
-          : "update";
-    if (!window.confirm(`Are you sure you want to ${actionName} this order?`))
-      return;
-
-    setActionLoading(id); // START LOADING SPINNER
+    // FIX: Removed window.confirm so it never gets blocked by the browser!
+    setActionLoading(id);
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
       await fetchOrders();
@@ -135,7 +127,7 @@ const AdminDashboard = () => {
         `Update failed: ${error.response?.data?.message || "Server Error"}`,
       );
     } finally {
-      setActionLoading(null); // STOP LOADING SPINNER
+      setActionLoading(null);
     }
   };
 
@@ -145,9 +137,9 @@ const AdminDashboard = () => {
       if (statusTab === "rejected") {
         if (!["rejected", "cancelled"].includes(order.orderStatus))
           return false;
-      } else if (statusTab !== "all" && order.orderStatus !== statusTab)
+      } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
         return false;
-
+      }
       if (typeFilter !== "all" && order.orderType !== typeFilter) return false;
 
       const orderDate = new Date(order.createdAt);
@@ -369,7 +361,6 @@ const AdminDashboard = () => {
                       </p>
                     </div>
 
-                    {/* --- FIXED ACTION BUTTONS --- */}
                     <div className="flex gap-2 w-full mt-2">
                       {order.orderStatus === "pending" && (
                         <button
@@ -624,6 +615,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* --- ORDER DETAILS MODAL --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}

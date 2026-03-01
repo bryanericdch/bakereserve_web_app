@@ -25,7 +25,7 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null); // Tracks the specific trash button
+  const [deletingId, setDeletingId] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
 
   const [open, setOpen] = useState(false);
@@ -133,12 +133,8 @@ const AdminProducts = () => {
   const submitRestock = async () => {
     if (!restockData.addAmount || Number(restockData.addAmount) <= 0) return;
     const newStock = restockData.currentStock + Number(restockData.addAmount);
-    setProducts(
-      products.map((p) =>
-        p._id === restockData.id ? { ...p, countInStock: newStock } : p,
-      ),
-    );
     setRestockOpen(false);
+
     try {
       await axios.put(
         `${API_URL}/products/${restockData.id}`,
@@ -151,7 +147,7 @@ const AdminProducts = () => {
       alert(
         error.response?.data?.message || "Failed to restock. Server error.",
       );
-      fetchProducts(); // Restore original UI if it failed
+      fetchProducts();
     }
   };
 
@@ -202,30 +198,28 @@ const AdminProducts = () => {
       setOpen(false);
       fetchProducts();
       resetForm();
-    } catch {
-      alert("Error saving product.");
+    } catch (error) {
+      alert(
+        `Error saving product: ${error.response?.data?.message || error.message}`,
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (
-      !window.confirm("Delete this product? It will be hidden from the store.")
-    )
-      return;
-
-    setDeletingId(id); // START LOADING SPINNER
+    // FIX: Removed window.confirm so the browser doesn't block the click!
+    setDeletingId(id);
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
       await fetchProducts();
     } catch (error) {
       console.error(error);
       alert(
-        `Failed to delete: ${error.response?.data?.message || "Server Error"}`,
+        `Delete failed: ${error.response?.data?.message || "Server Error"}`,
       );
     } finally {
-      setDeletingId(null); // STOP LOADING SPINNER
+      setDeletingId(null);
     }
   };
 
@@ -407,6 +401,7 @@ const AdminProducts = () => {
         )}
       </div>
 
+      {/* --- ADD / EDIT PRODUCT MODAL --- */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -623,6 +618,43 @@ const AdminProducts = () => {
             sx={{ bgcolor: "#111827" }}
           >
             {submitting ? "Saving..." : "Save Product"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* --- RESTORED: ADD SLOTS MODAL --- */}
+      <Dialog
+        open={restockOpen}
+        onClose={() => setRestockOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Add Daily Slots</DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="mb-4">
+            Add daily capacity for: <b>{restockData.name}</b>
+          </p>
+          <TextField
+            label="Additional Slots"
+            type="number"
+            fullWidth
+            autoFocus
+            value={restockData.addAmount}
+            onChange={(e) => {
+              if (Number(e.target.value) >= 0)
+                setRestockData({ ...restockData, addAmount: e.target.value });
+            }}
+            InputProps={{ inputProps: { min: 1 } }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRestockOpen(false)}>Cancel</Button>
+          <Button
+            onClick={submitRestock}
+            variant="contained"
+            sx={{ bgcolor: "#111827" }}
+          >
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
