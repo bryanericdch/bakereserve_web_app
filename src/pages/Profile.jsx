@@ -422,6 +422,22 @@ const Profile = () => {
             type={showNew ? "text" : "password"}
             value={passwordData.confirmPassword}
             onChange={handlePasswordChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    size="small"
+                  >
+                    {showCurrent ? (
+                      <VisibilityOff fontSize="small" />
+                    ) : (
+                      <Visibility fontSize="small" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
