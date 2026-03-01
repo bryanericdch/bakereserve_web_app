@@ -15,18 +15,14 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
 
-const countryCodes = [
-  { code: "+63", label: "PH (+63)" },
-  { code: "+1", label: "US (+1)" },
-  { code: "+44", label: "UK (+44)" },
-];
+const countryCodes = [{ code: "+63", label: "PH (+63)" }];
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, SFLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // NEW STATE
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
@@ -68,19 +64,25 @@ const Auth = () => {
         setError("Last Name must be at least 2 characters.");
         return false;
       }
-      const numberRegex = /^\d+$/;
+
+      // EXACTLY 10 DIGITS VALIDATION
+      const numberRegex = /^\d{10}$/;
       if (!numberRegex.test(formData.contactNumber)) {
-        setError("Contact number should only contain numbers.");
+        setError("Contact number must be exactly 10 digits.");
         return false;
       }
+
       if (formData.password.length <= 6) {
         setError("Password must be more than 6 characters.");
         return false;
       }
-      const strictPasswordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/;
+
+      // STRICT ALPHANUMERIC REGEX (Lower, Upper, Number, Special Char)
+      const strictPasswordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/;
       if (!strictPasswordRegex.test(formData.password)) {
         setError(
-          "Password must contain letters, numbers, and special characters (!@#$%^&*).",
+          "Password must contain an uppercase letter, lowercase letter, a number, and a special character (!@#$%^&*).",
         );
         return false;
       }
@@ -214,7 +216,6 @@ const Auth = () => {
               onChange={handleChange}
             />
 
-            {/* --- UPDATED PASSWORD FIELD W/ EYE ICON --- */}
             <TextField
               label="Password"
               name="password"
@@ -224,7 +225,11 @@ const Auth = () => {
               required
               onChange={handleChange}
               value={formData.password}
-              helperText={!isLogin ? "Must include special char (!@#$)" : ""}
+              helperText={
+                !isLogin
+                  ? "Min 7 chars. Uppercase, lowercase, number, special char."
+                  : ""
+              }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -266,6 +271,7 @@ const Auth = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {/* SET MAXLENGTH TO 10 */}
                 <TextField
                   label="Contact Number"
                   name="contactNumber"
@@ -273,8 +279,12 @@ const Auth = () => {
                   size="small"
                   fullWidth
                   required
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) handleChange(e); // Only allow digits
+                  }}
                   placeholder="9123456789"
+                  InputProps={{ inputProps: { maxLength: 10 } }}
                 />
               </div>
             )}

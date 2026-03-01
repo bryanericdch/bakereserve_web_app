@@ -5,11 +5,11 @@ import HomeHeader from "../components/HomeHeader";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -17,6 +17,12 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import CloseIcon from "@mui/icons-material/Close";
 
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
@@ -30,7 +36,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Password Visibility States
+  // Password Modal States
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
@@ -38,8 +47,11 @@ const Profile = () => {
     firstName: userInfo.firstName || "",
     lastName: userInfo.lastName || "",
     contactNumber: userInfo.contactNumber || "",
-    address: userInfo.address || "", // NEW FIELD
-    currentPassword: "", // NEW PASSWORD FLOW
+    address: userInfo.address || "",
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -56,47 +68,18 @@ const Profile = () => {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handlePasswordChange = (e) =>
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
 
-  const handleSave = async () => {
+  const handleSaveProfile = async () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
 
-    // Local Validation for Passwords
-    if (formData.newPassword) {
-      if (!formData.currentPassword) {
-        setLoading(false);
-        return setMessage({
-          type: "error",
-          text: "You must enter your current password to change it.",
-        });
-      }
-      if (formData.newPassword !== formData.confirmPassword) {
-        setLoading(false);
-        return setMessage({
-          type: "error",
-          text: "New passwords do not match.",
-        });
-      }
-    }
-
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-
-      const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        contactNumber: formData.contactNumber,
-        address: formData.address,
-      };
-
-      if (formData.newPassword) {
-        payload.currentPassword = formData.currentPassword;
-        payload.newPassword = formData.newPassword;
-      }
-
       const { data } = await axios.put(
         `${API_URL}/users/profile`,
-        payload,
+        formData,
         config,
       );
 
@@ -104,12 +87,6 @@ const Profile = () => {
       setUserInfo(data);
       setIsEditing(false);
       setMessage({ type: "success", text: "Profile updated successfully!" });
-      setFormData({
-        ...formData,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
     } catch (error) {
       setMessage({
         type: "error",
@@ -117,6 +94,61 @@ const Profile = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    setPasswordError("");
+
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      return setPasswordError("All fields are required.");
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return setPasswordError("New passwords do not match.");
+    }
+
+    const strictPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/;
+    if (
+      !strictPasswordRegex.test(passwordData.newPassword) ||
+      passwordData.newPassword.length <= 6
+    ) {
+      return setPasswordError(
+        "New password must be > 6 chars, contain uppercase, lowercase, number, and special character.",
+      );
+    }
+
+    setPasswordLoading(true);
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      const { data } = await axios.put(
+        `${API_URL}/users/profile`,
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        },
+        config,
+      );
+
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setUserInfo(data);
+      setPasswordModalOpen(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setMessage({ type: "success", text: "Password changed successfully!" });
+    } catch (error) {
+      setPasswordError(
+        error.response?.data?.message || "Failed to change password.",
+      );
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -131,7 +163,10 @@ const Profile = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              setIsEditing(!isEditing);
+              setMessage({ type: "", text: "" });
+            }}
             className="flex items-center gap-1 text-sm font-bold text-amber-600 hover:text-amber-700 bg-amber-50 px-4 py-2 rounded-full transition-colors"
           >
             {isEditing ? (
@@ -152,7 +187,6 @@ const Profile = () => {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-amber-50 px-8 py-10 flex flex-col items-center border-b border-amber-100 relative">
-            {/* Alert Badge if Address is Missing */}
             {!userInfo.address && !isEditing && (
               <div className="absolute top-4 w-full text-center">
                 <span className="bg-red-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
@@ -233,7 +267,10 @@ const Profile = () => {
                     label="Contact Number"
                     name="contactNumber"
                     value={formData.contactNumber}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      if (/^\d*$/.test(e.target.value)) handleChange(e);
+                    }}
+                    InputProps={{ inputProps: { maxLength: 10 } }}
                   />
                 ) : (
                   <div>
@@ -248,7 +285,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* --- NEW: ADDRESS FIELD --- */}
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
                 <HomeOutlinedIcon fontSize="small" />
@@ -278,85 +314,12 @@ const Profile = () => {
                 )}
               </div>
             </div>
-
-            {/* --- NEW PASSWORD FLOW --- */}
-            {isEditing && (
-              <div className="pt-6 border-t border-gray-100 space-y-4">
-                <p className="text-sm text-gray-800 font-bold">
-                  Change Password (Optional)
-                </p>
-                <p className="text-xs text-gray-500">
-                  Leave these blank if you do not want to change your password.
-                </p>
-                <TextField
-                  size="small"
-                  fullWidth
-                  type={showCurrent ? "text" : "password"}
-                  label="Current Password"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleChange}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowCurrent(!showCurrent)}
-                          size="small"
-                        >
-                          {showCurrent ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <div className="flex gap-4">
-                  <TextField
-                    size="small"
-                    fullWidth
-                    type={showNew ? "text" : "password"}
-                    label="New Password"
-                    name="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowNew(!showNew)}
-                            size="small"
-                          >
-                            {showNew ? (
-                              <VisibilityOff fontSize="small" />
-                            ) : (
-                              <Visibility fontSize="small" />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    size="small"
-                    fullWidth
-                    type={showNew ? "text" : "password"}
-                    label="Confirm New Password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-4 border-t border-gray-100">
             {isEditing ? (
               <button
-                onClick={handleSave}
+                onClick={handleSaveProfile}
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl font-bold transition-colors shadow-md"
               >
@@ -364,17 +327,17 @@ const Profile = () => {
                   <CircularProgress size={24} color="inherit" />
                 ) : (
                   <>
-                    <SaveIcon fontSize="small" /> Save Changes
+                    <SaveIcon fontSize="small" /> Save Profile
                   </>
                 )}
               </button>
             ) : (
               <>
                 <button
-                  onClick={() => navigate("/orders")}
+                  onClick={() => setPasswordModalOpen(true)}
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold transition-colors"
                 >
-                  <ShoppingBagOutlinedIcon fontSize="small" /> View My Orders
+                  <LockOutlinedIcon fontSize="small" /> Change Password
                 </button>
                 <button
                   onClick={handleLogout}
@@ -387,6 +350,98 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* CHANGE PASSWORD MODAL */}
+      <Dialog
+        open={passwordModalOpen}
+        onClose={() => setPasswordModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="flex justify-between items-center font-bold border-b pb-3">
+          Change Password
+          <IconButton onClick={() => setPasswordModalOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className="pt-5 space-y-4">
+          {passwordError && <Alert severity="error">{passwordError}</Alert>}
+          <TextField
+            size="small"
+            fullWidth
+            label="Current Password"
+            name="currentPassword"
+            type={showCurrent ? "text" : "password"}
+            value={passwordData.currentPassword}
+            onChange={handlePasswordChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    size="small"
+                  >
+                    {showCurrent ? (
+                      <VisibilityOff fontSize="small" />
+                    ) : (
+                      <Visibility fontSize="small" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            size="small"
+            fullWidth
+            label="New Password"
+            name="newPassword"
+            type={showNew ? "text" : "password"}
+            value={passwordData.newPassword}
+            onChange={handlePasswordChange}
+            helperText="Uppercase, lowercase, number, and special char required."
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowNew(!showNew)} size="small">
+                    {showNew ? (
+                      <VisibilityOff fontSize="small" />
+                    ) : (
+                      <Visibility fontSize="small" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            size="small"
+            fullWidth
+            label="Confirm New Password"
+            name="confirmPassword"
+            type={showNew ? "text" : "password"}
+            value={passwordData.confirmPassword}
+            onChange={handlePasswordChange}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() => setPasswordModalOpen(false)}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSavePassword}
+            variant="contained"
+            disabled={passwordLoading}
+            sx={{ bgcolor: "#111827", fontWeight: "bold" }}
+          >
+            {passwordLoading ? "Updating..." : "Update Password"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
