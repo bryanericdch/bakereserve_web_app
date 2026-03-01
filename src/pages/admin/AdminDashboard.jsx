@@ -26,6 +26,7 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // NEW: Tracks which button is processing
 
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
@@ -121,9 +122,10 @@ const AdminDashboard = () => {
     if (!window.confirm(`Are you sure you want to ${actionName} this order?`))
       return;
 
+    setActionLoading(id); // START LOADING SPINNER
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
-      fetchOrders();
+      await fetchOrders();
       if (selectedOrder && selectedOrder._id === id) {
         setSelectedOrder({ ...selectedOrder, orderStatus: status });
       }
@@ -132,6 +134,8 @@ const AdminDashboard = () => {
       alert(
         `Update failed: ${error.response?.data?.message || "Server Error"}`,
       );
+    } finally {
+      setActionLoading(null); // STOP LOADING SPINNER
     }
   };
 
@@ -365,22 +369,32 @@ const AdminDashboard = () => {
                       </p>
                     </div>
 
-                    {/* --- ACTION BUTTONS --- */}
+                    {/* --- FIXED ACTION BUTTONS --- */}
                     <div className="flex gap-2 w-full mt-2">
                       {order.orderStatus === "pending" && (
                         <button
                           onClick={() => updateStatus(order._id, "approved")}
-                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition"
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition disabled:opacity-50"
                         >
-                          APPROVE
+                          {actionLoading === order._id ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            "APPROVE"
+                          )}
                         </button>
                       )}
                       {order.orderStatus === "approved" && (
                         <button
                           onClick={() => updateStatus(order._id, "in_process")}
-                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition"
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition disabled:opacity-50"
                         >
-                          START PROCESS
+                          {actionLoading === order._id ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            "START PROCESS"
+                          )}
                         </button>
                       )}
                       {order.orderStatus === "in_process" && (
@@ -388,17 +402,27 @@ const AdminDashboard = () => {
                           onClick={() =>
                             updateStatus(order._id, "ready_for_pickup")
                           }
-                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition"
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition disabled:opacity-50"
                         >
-                          READY FOR PICKUP
+                          {actionLoading === order._id ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            "READY FOR PICKUP"
+                          )}
                         </button>
                       )}
                       {order.orderStatus === "ready_for_pickup" && (
                         <button
                           onClick={() => updateStatus(order._id, "completed")}
-                          className="flex-1 bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition"
+                          disabled={actionLoading === order._id}
+                          className="flex-1 bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 shadow-sm transition disabled:opacity-50"
                         >
-                          COMPLETE
+                          {actionLoading === order._id ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            "COMPLETE"
+                          )}
                         </button>
                       )}
 
@@ -418,14 +442,19 @@ const AdminDashboard = () => {
                                 : "cancelled",
                             )
                           }
-                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition flex items-center justify-center"
+                          disabled={actionLoading === order._id}
+                          className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center"
                           title={
                             order.orderStatus === "pending"
                               ? "Reject Order"
                               : "Cancel Order"
                           }
                         >
-                          <CancelOutlinedIcon fontSize="small" />
+                          {actionLoading === order._id ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            <CancelOutlinedIcon fontSize="small" />
+                          )}
                         </button>
                       )}
                     </div>
@@ -595,7 +624,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* --- ORDER DETAILS MODAL --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}

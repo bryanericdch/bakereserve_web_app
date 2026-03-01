@@ -25,6 +25,7 @@ const API_URL = "https://bakereserve-api.onrender.com/api";
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null); // Tracks the specific trash button
   const [activeTab, setActiveTab] = useState("all");
 
   const [open, setOpen] = useState(false);
@@ -145,8 +146,12 @@ const AdminProducts = () => {
         config,
       );
       fetchProducts();
-    } catch {
-      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      alert(
+        error.response?.data?.message || "Failed to restock. Server error.",
+      );
+      fetchProducts(); // Restore original UI if it failed
     }
   };
 
@@ -178,7 +183,6 @@ const AdminProducts = () => {
         data.append("subCategory", formData.subCategory);
       if (formData.flavor) data.append("flavor", formData.flavor);
     }
-
     if (imageFile) data.append("image", imageFile);
 
     try {
@@ -210,14 +214,18 @@ const AdminProducts = () => {
       !window.confirm("Delete this product? It will be hidden from the store.")
     )
       return;
+
+    setDeletingId(id); // START LOADING SPINNER
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
       alert(
         `Failed to delete: ${error.response?.data?.message || "Server Error"}`,
       );
+    } finally {
+      setDeletingId(null); // STOP LOADING SPINNER
     }
   };
 
@@ -376,14 +384,20 @@ const AdminProducts = () => {
                     <IconButton
                       color="primary"
                       onClick={() => openEditModal(product)}
+                      disabled={deletingId === product._id}
                     >
                       <EditOutlinedIcon />
                     </IconButton>
                     <IconButton
                       color="error"
                       onClick={() => handleDelete(product._id)}
+                      disabled={deletingId === product._id}
                     >
-                      <DeleteOutlineIcon />
+                      {deletingId === product._id ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : (
+                        <DeleteOutlineIcon />
+                      )}
                     </IconButton>
                   </td>
                 </tr>
