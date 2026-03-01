@@ -6,14 +6,18 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Profile = () => {
@@ -26,11 +30,18 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Password Visibility States
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+
   const [formData, setFormData] = useState({
     firstName: userInfo.firstName || "",
     lastName: userInfo.lastName || "",
     contactNumber: userInfo.contactNumber || "",
-    password: "", // Optional, only if they want to change it
+    address: userInfo.address || "", // NEW FIELD
+    currentPassword: "", // NEW PASSWORD FLOW
+    newPassword: "",
+    confirmPassword: "",
   });
 
   if (!userInfo.token) {
@@ -50,12 +61,38 @@ const Profile = () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
 
+    // Local Validation for Passwords
+    if (formData.newPassword) {
+      if (!formData.currentPassword) {
+        setLoading(false);
+        return setMessage({
+          type: "error",
+          text: "You must enter your current password to change it.",
+        });
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        setLoading(false);
+        return setMessage({
+          type: "error",
+          text: "New passwords do not match.",
+        });
+      }
+    }
+
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-      // Only send password if user typed something
-      const payload = { ...formData };
-      if (!payload.password) delete payload.password;
+      const payload = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        contactNumber: formData.contactNumber,
+        address: formData.address,
+      };
+
+      if (formData.newPassword) {
+        payload.currentPassword = formData.currentPassword;
+        payload.newPassword = formData.newPassword;
+      }
 
       const { data } = await axios.put(
         `${API_URL}/users/profile`,
@@ -63,12 +100,16 @@ const Profile = () => {
         config,
       );
 
-      // Update local storage and state
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUserInfo(data);
       setIsEditing(false);
       setMessage({ type: "success", text: "Profile updated successfully!" });
-      setFormData({ ...formData, password: "" }); // Clear password field
+      setFormData({
+        ...formData,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (error) {
       setMessage({
         type: "error",
@@ -110,9 +151,16 @@ const Profile = () => {
         )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Header Area */}
-          <div className="bg-amber-50 px-8 py-10 flex flex-col items-center border-b border-amber-100">
-            <div className="w-24 h-24 bg-amber-500 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-md mb-4">
+          <div className="bg-amber-50 px-8 py-10 flex flex-col items-center border-b border-amber-100 relative">
+            {/* Alert Badge if Address is Missing */}
+            {!userInfo.address && !isEditing && (
+              <div className="absolute top-4 w-full text-center">
+                <span className="bg-red-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
+                  ⚠ Please complete your profile address
+                </span>
+              </div>
+            )}
+            <div className="w-24 h-24 bg-amber-500 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-md mb-4 mt-2">
               {initials}
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
@@ -123,9 +171,7 @@ const Profile = () => {
             </span>
           </div>
 
-          {/* User Details / Edit Form */}
           <div className="p-8 space-y-6">
-            {/* EMAIL IS READ ONLY */}
             <div className="flex items-center gap-4 opacity-70">
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
                 <EmailOutlinedIcon fontSize="small" />
@@ -202,25 +248,111 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* --- NEW: ADDRESS FIELD --- */}
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+                <HomeOutlinedIcon fontSize="small" />
+              </div>
+              <div className="flex-1">
+                {isEditing ? (
+                  <TextField
+                    size="small"
+                    fullWidth
+                    label="Delivery / Home Address"
+                    name="address"
+                    multiline
+                    rows={2}
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="e.g. 123 Main St, Brgy. San Juan, City"
+                  />
+                ) : (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Address</p>
+                    <p
+                      className={`font-bold ${userInfo.address ? "text-gray-800" : "text-red-500"}`}
+                    >
+                      {userInfo.address || "Not provided"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* --- NEW PASSWORD FLOW --- */}
             {isEditing && (
-              <div className="pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 font-medium mb-2">
-                  Change Password (Leave blank to keep current password)
+              <div className="pt-6 border-t border-gray-100 space-y-4">
+                <p className="text-sm text-gray-800 font-bold">
+                  Change Password (Optional)
+                </p>
+                <p className="text-xs text-gray-500">
+                  Leave these blank if you do not want to change your password.
                 </p>
                 <TextField
                   size="small"
                   fullWidth
-                  type="password"
-                  label="New Password"
-                  name="password"
-                  value={formData.password}
+                  type={showCurrent ? "text" : "password"}
+                  label="Current Password"
+                  name="currentPassword"
+                  value={formData.currentPassword}
                   onChange={handleChange}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowCurrent(!showCurrent)}
+                          size="small"
+                        >
+                          {showCurrent ? (
+                            <VisibilityOff fontSize="small" />
+                          ) : (
+                            <Visibility fontSize="small" />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
+                <div className="flex gap-4">
+                  <TextField
+                    size="small"
+                    fullWidth
+                    type={showNew ? "text" : "password"}
+                    label="New Password"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowNew(!showNew)}
+                            size="small"
+                          >
+                            {showNew ? (
+                              <VisibilityOff fontSize="small" />
+                            ) : (
+                              <Visibility fontSize="small" />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <TextField
+                    size="small"
+                    fullWidth
+                    type={showNew ? "text" : "password"}
+                    label="Confirm New Password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-4 border-t border-gray-100">
             {isEditing ? (
               <button
@@ -258,5 +390,4 @@ const Profile = () => {
     </div>
   );
 };
-
 export default Profile;

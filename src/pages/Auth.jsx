@@ -7,12 +7,13 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import IconButton from "@mui/material/IconButton"; // Import IconButton
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Import Arrow Icon
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
-// Ensure this matches your live backend or localhost
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
-//const API_URL = "http://localhost:5000/api/auth";
 
 const countryCodes = [
   { code: "+63", label: "PH (+63)" },
@@ -25,19 +26,16 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, SFLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // NEW STATE
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     if (userInfo) {
-      if (userInfo.role === "admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/home");
-      }
+      if (userInfo.role === "admin") navigate("/admin/dashboard");
+      else navigate("/home");
     }
   }, [navigate]);
 
-  // Form Data
   const [countryCode, setCountryCode] = useState("+63");
   const [formData, setFormData] = useState({
     firstName: "",
@@ -47,28 +45,21 @@ const Auth = () => {
     password: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const validateForm = () => {
-    // --- COMMON CHECKS ---
-    // 1. Email Format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError("Please enter a valid email address.");
       return false;
     }
-
-    // 2. Password Not Empty
     if (!formData.password) {
       setError("Please enter your password.");
       return false;
     }
 
-    // --- STRICT CHECKS FOR SIGNUP ONLY ---
     if (!isLogin) {
-      // Name Length (> 1 character means length >= 2)
       if (formData.firstName.trim().length < 2) {
         setError("First Name must be at least 2 characters.");
         return false;
@@ -77,21 +68,15 @@ const Auth = () => {
         setError("Last Name must be at least 2 characters.");
         return false;
       }
-
-      // Contact Number (Only Numbers)
       const numberRegex = /^\d+$/;
       if (!numberRegex.test(formData.contactNumber)) {
         setError("Contact number should only contain numbers.");
         return false;
       }
-
-      // Password Complexity (>6 chars, alphanumeric, special char)
       if (formData.password.length <= 6) {
         setError("Password must be more than 6 characters.");
         return false;
       }
-
-      // Regex: Letters + Numbers + Special Characters
       const strictPasswordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/;
       if (!strictPasswordRegex.test(formData.password)) {
         setError(
@@ -100,37 +85,26 @@ const Auth = () => {
         return false;
       }
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     if (!validateForm()) return;
 
     SFLoading(true);
-
     try {
       if (isLogin) {
-        // --- LOGIN ---
         const { data } = await axios.post(`${API_URL}/login`, {
           email: formData.email,
           password: formData.password,
         });
-
         localStorage.setItem("userInfo", JSON.stringify(data));
-
-        if (data.role === "admin") {
-          navigate("/admin/dashboard"); // <--- Redirect Admin
-        } else {
-          navigate("/home"); // <--- Redirect Customer
-        }
+        if (data.role === "admin") navigate("/admin/dashboard");
+        else navigate("/home");
       } else {
-        // --- REGISTER ---
         const fullContactNumber = `${countryCode}${formData.contactNumber}`;
-
         const { data } = await axios.post(`${API_URL}/register`, {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -138,18 +112,15 @@ const Auth = () => {
           contactNumber: fullContactNumber,
           password: formData.password,
         });
-
-        // INSTEAD OF LOGGING IN, JUST SHOW SUCCESS MESSAGE
         alert(
           data.message ||
             "Registration successful! Please check your email to verify your account.",
         );
-        setIsLogin(true); // switch to login tab
-        setFormData({ ...formData, password: "" }); // clear password
+        setIsLogin(true);
+        setFormData({ ...formData, password: "" });
       }
     } catch (err) {
       console.error(err);
-      // Backend now sends "Email not found" or "Password is incorrect"
       setError(
         err.response?.data?.message || "Server error. Please try again.",
       );
@@ -160,7 +131,6 @@ const Auth = () => {
 
   return (
     <div className="flex w-full h-screen bg-[#FFFBF7] items-center justify-center p-4">
-      {/* --- NEW BACK BUTTON --- */}
       <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
         <IconButton
           onClick={() => navigate("/")}
@@ -174,7 +144,6 @@ const Auth = () => {
         </IconButton>
       </div>
       <div className="flex flex-col md:flex-row w-full max-w-5xl items-center justify-between gap-10">
-        {/* Branding */}
         <div className="text-center md:text-left md:w-1/2 space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
             <span className="text-amber-600">BakeReserve.</span>
@@ -185,16 +154,10 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Form Card */}
         <div className="w-full md:w-[450px] bg-[#FEFAF6] rounded-2xl shadow-xl p-8 border border-gray-100">
-          {/* Tabs */}
           <div className="flex w-full bg-gray-200 rounded-lg p-1 mb-6">
             <button
-              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                isLogin
-                  ? "bg-black text-white shadow-md"
-                  : "text-gray-600 hover:text-black"
-              }`}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${isLogin ? "bg-black text-white shadow-md" : "text-gray-600 hover:text-black"}`}
               onClick={() => {
                 setIsLogin(true);
                 setError("");
@@ -203,11 +166,7 @@ const Auth = () => {
               Login
             </button>
             <button
-              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                !isLogin
-                  ? "bg-black text-white shadow-md"
-                  : "text-gray-600 hover:text-black"
-              }`}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${!isLogin ? "bg-black text-white shadow-md" : "text-gray-600 hover:text-black"}`}
               onClick={() => {
                 setIsLogin(false);
                 setError("");
@@ -255,15 +214,30 @@ const Auth = () => {
               onChange={handleChange}
             />
 
+            {/* --- UPDATED PASSWORD FIELD W/ EYE ICON --- */}
             <TextField
               label="Password"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               size="small"
               fullWidth
               required
               onChange={handleChange}
+              value={formData.password}
               helperText={!isLogin ? "Must include special char (!@#$)" : ""}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             {isLogin && (

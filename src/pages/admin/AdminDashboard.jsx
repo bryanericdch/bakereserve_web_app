@@ -7,6 +7,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
@@ -39,12 +41,13 @@ const AdminDashboard = () => {
 
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // NEW: State for Custom Cancel Modal
+  // Custom Cancel/Reject Modal State
   const [confirmCancel, setConfirmCancel] = useState({
     open: false,
     id: null,
     status: null,
   });
+  const [rejectReason, setRejectReason] = useState("");
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -121,10 +124,14 @@ const AdminDashboard = () => {
     },
   ];
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, reason = "") => {
     setActionLoading(id);
     try {
-      await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
+      await axios.put(
+        `${API_URL}/orders/${id}/status`,
+        { status, rejectReason: reason },
+        config,
+      );
       await fetchOrders();
       if (selectedOrder && selectedOrder._id === id) {
         setSelectedOrder({ ...selectedOrder, orderStatus: status });
@@ -218,6 +225,14 @@ const AdminDashboard = () => {
   };
 
   const statsData = getStats();
+
+  const rejectionReasons = [
+    "Delivery address is out of our shop range.",
+    "Selected items are unexpectedly out of stock.",
+    "Store is currently fully booked for the selected date.",
+    "Custom cake instructions cannot be accommodated.",
+    "Other/Contact Store for details.",
+  ];
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] p-6">
@@ -425,7 +440,7 @@ const AdminDashboard = () => {
                         </button>
                       )}
 
-                      {/* --- CUSTOM MODAL TRIGGER FOR CANCEL --- */}
+                      {/* Cancel / Reject Button for ALL Active Stages */}
                       {[
                         "pending",
                         "approved",
@@ -433,7 +448,8 @@ const AdminDashboard = () => {
                         "ready_for_pickup",
                       ].includes(order.orderStatus) && (
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            setRejectReason("");
                             setConfirmCancel({
                               open: true,
                               id: order._id,
@@ -441,8 +457,8 @@ const AdminDashboard = () => {
                                 order.orderStatus === "pending"
                                   ? "rejected"
                                   : "cancelled",
-                            })
-                          }
+                            });
+                          }}
                           disabled={actionLoading === order._id}
                           className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center"
                           title={
@@ -625,7 +641,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* --- CONFIRM CANCEL MODAL --- */}
+      {/* --- CONFIRM CANCEL / REJECT MODAL --- */}
       <Dialog
         open={confirmCancel.open}
         onClose={() =>
@@ -637,15 +653,31 @@ const AdminDashboard = () => {
         <DialogTitle className="font-bold text-red-600 border-b pb-3">
           Confirm Action
         </DialogTitle>
-        <DialogContent className="pt-4">
-          <p className="text-gray-700 mb-2">
+        <DialogContent className="pt-4 space-y-4">
+          <p className="text-gray-700 font-medium">
             Are you sure you want to{" "}
             <b>{confirmCancel.status === "rejected" ? "reject" : "cancel"}</b>{" "}
             this order?
           </p>
+
+          {confirmCancel.status === "rejected" && (
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Reason for Rejection"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            >
+              {rejectionReasons.map((reason, idx) => (
+                <MenuItem key={idx} value={reason}>
+                  {reason}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
           <p className="text-xs text-gray-500">
-            This action cannot be undone, and the customer will be notified of
-            the update.
+            The customer will be notified of this update.
           </p>
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
@@ -660,11 +692,16 @@ const AdminDashboard = () => {
           </Button>
           <Button
             onClick={() => {
-              updateStatus(confirmCancel.id, confirmCancel.status);
+              updateStatus(
+                confirmCancel.id,
+                confirmCancel.status,
+                rejectReason,
+              );
               setConfirmCancel({ open: false, id: null, status: null });
             }}
             variant="contained"
             color="error"
+            disabled={confirmCancel.status === "rejected" && !rejectReason}
             sx={{ fontWeight: "bold" }}
           >
             Yes, {confirmCancel.status === "rejected" ? "Reject" : "Cancel"}{" "}
@@ -673,7 +710,7 @@ const AdminDashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* --- ORDER DETAILS MODAL --- */}
+      {/* --- ORDER DETAILS MODAL (Now includes Contact & Address) --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
@@ -701,13 +738,18 @@ const AdminDashboard = () => {
                   <p className="text-sm text-gray-600">
                     {selectedOrder.user?.email}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    {selectedOrder.user?.contactNumber || "No contact info"}
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-semibold">Phone:</span>{" "}
+                    {selectedOrder.user?.contactNumber || "Not provided"}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-semibold">Address:</span>{" "}
+                    {selectedOrder.user?.address || "Not provided"}
                   </p>
                 </div>
                 <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
                   <h4 className="text-xs font-bold text-amber-700 uppercase mb-2">
-                    Pickup Details
+                    Pickup/Delivery Details
                   </h4>
                   <p className="font-bold text-gray-800">
                     Date:{" "}

@@ -13,8 +13,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import Popover from "@mui/material/Popover";
+import Badge from "@mui/material/Badge"; // <-- ADDED BADGE
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const HomeHeader = () => {
@@ -23,11 +23,9 @@ const HomeHeader = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [cartCount, setCartCount] = useState(0);
 
-  // Notification State
   const [notifications, setNotifications] = useState([]);
   const [notifAnchor, setNotifAnchor] = useState(null);
 
-  // Search State
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -36,11 +34,8 @@ const HomeHeader = () => {
   useEffect(() => {
     if (!userInfo.token) return;
 
-    const config = {
-      headers: { Authorization: `Bearer ${userInfo.token}` },
-    };
+    const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-    // Fetch Cart Count
     const fetchCartCount = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/cart`, config);
@@ -52,7 +47,6 @@ const HomeHeader = () => {
       }
     };
 
-    // Fetch Notifications
     const fetchNotifs = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/notifications`, config);
@@ -73,7 +67,6 @@ const HomeHeader = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  // --- ACTIONS ---
   const scrollToMenu = () => {
     if (location.pathname !== "/home") {
       navigate("/home");
@@ -102,8 +95,6 @@ const HomeHeader = () => {
       navigate(`/home?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery("");
-
-      // Auto scroll to menu so they see the results
       setTimeout(
         () =>
           document
@@ -114,7 +105,6 @@ const HomeHeader = () => {
     }
   };
 
-  // Mark notification as read
   const handleReadNotif = async (notif) => {
     if (notif.isRead) return;
     try {
@@ -130,7 +120,6 @@ const HomeHeader = () => {
     }
   };
 
-  // --- MOBILE DRAWER ---
   const DrawerList = (
     <div className="w-72 flex flex-col h-full bg-white" role="presentation">
       <div className="p-6 bg-amber-50">
@@ -138,6 +127,18 @@ const HomeHeader = () => {
           {userInfo.firstName} {userInfo.lastName}
         </h2>
         <p className="text-sm text-gray-500">{userInfo.email}</p>
+        {/* Reminder inside Drawer */}
+        {!userInfo.address && (
+          <p
+            className="text-xs text-red-500 mt-2 font-bold cursor-pointer hover:underline"
+            onClick={() => {
+              setOpenDrawer(false);
+              navigate("/profile");
+            }}
+          >
+            ⚠ Action required: Please add your address.
+          </p>
+        )}
       </div>
       <Divider />
       <List className="flex-1">
@@ -176,9 +177,7 @@ const HomeHeader = () => {
             <ListItemText primary="Contact Us" />
           </ListItemButton>
         </ListItem>
-
         <Divider className="my-2" />
-
         <ListItem disablePadding>
           <ListItemButton onClick={() => navigate("/profile")}>
             <ListItemText primary="Account Settings" />
@@ -210,7 +209,6 @@ const HomeHeader = () => {
       >
         BakeReserve
       </h1>
-
       <nav className="hidden md:flex gap-6 lg:gap-8 text-gray-700 font-medium items-center text-sm lg:text-base">
         <button
           onClick={() => navigate("/home")}
@@ -239,7 +237,6 @@ const HomeHeader = () => {
       </nav>
 
       <div className="flex items-center gap-4 md:gap-6">
-        {/* --- SEARCH BAR EXPANDABLE --- */}
         <div className="flex items-center h-10">
           {searchOpen ? (
             <form
@@ -249,22 +246,22 @@ const HomeHeader = () => {
               <input
                 type="text"
                 autoFocus
-                placeholder="Search cakes, breads..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-sm w-full py-1 text-gray-700 placeholder-gray-400"
+                className="bg-transparent border-none outline-none text-sm w-full py-1 text-gray-700"
               />
               <button
                 type="button"
                 onClick={() => setSearchOpen(false)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-400 hover:text-red-500"
               >
                 <CloseIcon fontSize="small" />
               </button>
             </form>
           ) : (
             <button
-              className="text-gray-700 hover:text-amber-600 transition-colors p-1"
+              className="text-gray-700 hover:text-amber-600 p-1"
               onClick={() => setSearchOpen(true)}
             >
               <SearchIcon />
@@ -272,7 +269,6 @@ const HomeHeader = () => {
           )}
         </div>
 
-        {/* --- NOTIFICATIONS BELL --- */}
         <button
           className="text-gray-700 hover:text-amber-600 relative p-1 transition-colors"
           onClick={(e) => setNotifAnchor(e.currentTarget)}
@@ -283,7 +279,6 @@ const HomeHeader = () => {
           )}
         </button>
 
-        {/* --- NOTIFICATIONS POPOVER --- */}
         <Popover
           open={Boolean(notifAnchor)}
           anchorEl={notifAnchor}
@@ -307,11 +302,7 @@ const HomeHeader = () => {
                 <div
                   key={n._id}
                   onClick={() => handleReadNotif(n)}
-                  className={`p-3 border-b text-sm cursor-pointer transition ${
-                    n.isRead
-                      ? "bg-white opacity-60"
-                      : "bg-amber-50/30 font-medium"
-                  }`}
+                  className={`p-3 border-b text-sm cursor-pointer transition ${n.isRead ? "bg-white opacity-60" : "bg-amber-50/30 font-medium"}`}
                 >
                   <p className="text-gray-800 m-0">{n.message}</p>
                   <span className="text-[10px] text-gray-400 mt-1 block">
@@ -323,7 +314,6 @@ const HomeHeader = () => {
           </div>
         </Popover>
 
-        {/* --- SHOPPING CART --- */}
         <button
           className="text-gray-700 hover:text-amber-600 relative p-1 transition-colors"
           onClick={() => navigate("/cart")}
@@ -336,12 +326,14 @@ const HomeHeader = () => {
           )}
         </button>
 
-        {/* --- PROFILE / SIDEBAR TOGGLE --- */}
         <button
           className="flex items-center gap-2 text-gray-700 hover:text-amber-600 transition-colors p-1"
           onClick={() => setOpenDrawer(true)}
         >
-          <PersonIcon />
+          {/* --- NEW: RED DOT IF NO ADDRESS --- */}
+          <Badge color="error" variant="dot" invisible={!!userInfo.address}>
+            <PersonIcon />
+          </Badge>
           <span className="text-sm font-semibold hidden sm:block truncate max-w-[100px]">
             {userInfo.firstName || "User"}
           </span>
