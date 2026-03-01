@@ -9,14 +9,12 @@ import Divider from "@mui/material/Divider";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 
-// USE THIS FOR LOCAL TESTING:
-//const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("active"); // 'active' | 'past'
+  const [activeTab, setActiveTab] = useState("active");
 
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -42,7 +40,6 @@ const Orders = () => {
     fetchOrders();
   }, [navigate]);
 
-  // Filter orders based on active tab
   const filteredOrders = orders.filter((order) => {
     const isPast = ["completed", "cancelled", "rejected"].includes(
       order.orderStatus,
@@ -70,9 +67,7 @@ const Orders = () => {
     }
   };
 
-  const formatStatus = (status) => {
-    return status.replace(/_/g, " ").toUpperCase();
-  };
+  const formatStatus = (status) => status.replace(/_/g, " ").toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
@@ -81,7 +76,6 @@ const Orders = () => {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
 
-        {/* --- TABS --- */}
         <div className="flex gap-4 mb-6 border-b border-gray-200 pb-2">
           <button
             onClick={() => setActiveTab("active")}
@@ -97,7 +91,6 @@ const Orders = () => {
           </button>
         </div>
 
-        {/* --- ORDER LIST --- */}
         {loading ? (
           <div className="flex justify-center mt-20">
             <CircularProgress />
@@ -128,14 +121,19 @@ const Orders = () => {
                 key={order._id}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
               >
-                {/* Order Header */}
                 <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <span className="font-bold text-gray-800">
                         Order #{order._id.slice(-6).toUpperCase()}
                       </span>
-                      {order.orderType === "cake" ? (
+
+                      {/* --- FIX: ADDED CUSTOM CAKE BADGE --- */}
+                      {order.orderType === "custom_cake" ? (
+                        <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold border border-purple-200 uppercase">
+                          Custom Cake
+                        </span>
+                      ) : order.orderType === "cake" ? (
                         <span className="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold border border-pink-200 uppercase">
                           Cake Order
                         </span>
@@ -167,9 +165,7 @@ const Orders = () => {
                   </div>
                 </div>
 
-                {/* Order Body: Items & Pickup */}
                 <div className="p-6 flex flex-col md:flex-row gap-8">
-                  {/* Items List */}
                   <div className="flex-1 space-y-4">
                     <h4 className="text-sm font-bold text-gray-800 border-b pb-2">
                       Items Ordered
@@ -187,7 +183,6 @@ const Orders = () => {
                             {item.name}
                           </p>
 
-                          {/* Display Customizations if Cake */}
                           {item.customization && (
                             <ul className="text-xs text-gray-500 mt-1 pl-6 list-disc">
                               {item.customization.flavor && (
@@ -196,6 +191,10 @@ const Orders = () => {
                               {item.customization.shape && (
                                 <li>Shape: {item.customization.shape}</li>
                               )}
+                              {item.customization.size && (
+                                <li>Size: {item.customization.size}</li>
+                              )}{" "}
+                              {/* Added Size */}
                               {item.customization.message && (
                                 <li>Message: "{item.customization.message}"</li>
                               )}
@@ -213,17 +212,15 @@ const Orders = () => {
                     ))}
                   </div>
 
-                  {/* Divider for mobile */}
                   <Divider className="md:hidden" />
 
-                  {/* Pickup Details */}
                   <div className="w-full md:w-64 bg-amber-50/50 p-4 rounded-xl border border-amber-100 h-fit">
                     <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                       <AccessTimeIcon
                         fontSize="small"
                         className="text-amber-600"
                       />{" "}
-                      Pickup Schedule
+                      Pickup/Delivery Schedule
                     </h4>
                     <div className="space-y-2 text-sm text-gray-700">
                       <div className="flex justify-between">
