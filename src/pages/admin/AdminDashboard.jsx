@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import IconButton from "@mui/material/IconButton";
+import Divider from "@mui/material/Divider";
 
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
@@ -14,8 +19,9 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SortIcon from "@mui/icons-material/Sort";
 import CakeIcon from "@mui/icons-material/Cake";
 import BakeryDiningIcon from "@mui/icons-material/BakeryDining";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const AdminDashboard = () => {
@@ -25,8 +31,12 @@ const AdminDashboard = () => {
   const [mainView, setMainView] = useState("manage");
   const [statusTab, setStatusTab] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all"); // NEW: Date Filter
   const [statsPeriod, setStatsPeriod] = useState("month");
   const [rankSort, setRankSort] = useState("highest");
+
+  // Modal State
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -35,8 +45,8 @@ const AdminDashboard = () => {
     try {
       const { data } = await axios.get(`${API_URL}/orders`, config);
       setOrders(data);
-    } catch (error) {
-      console.error("Failed to fetch orders", error);
+    } catch {
+      console.error("Failed to fetch orders");
     } finally {
       setLoading(false);
     }
@@ -48,9 +58,7 @@ const AdminDashboard = () => {
 
   const getCount = (status) => {
     const filteredByType = orders.filter((o) => {
-      if (typeFilter === "cake") return o.orderType === "cake";
-      if (typeFilter === "custom_cake") return o.orderType === "custom_cake";
-      if (typeFilter === "bakery") return o.orderType === "bakery";
+      if (typeFilter !== "all" && o.orderType !== typeFilter) return false;
       return true;
     });
 
@@ -114,29 +122,43 @@ const AdminDashboard = () => {
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
       fetchOrders();
+      if (selectedOrder && selectedOrder._id === id) {
+        setSelectedOrder({ ...selectedOrder, orderStatus: status });
+      }
     } catch {
       alert("Update failed");
     }
   };
 
   const getManageOrders = () => {
+    const now = new Date();
     return orders.filter((order) => {
+      // Status Filter
       if (statusTab === "rejected") {
         if (!["rejected", "cancelled"].includes(order.orderStatus))
           return false;
       } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
         return false;
       }
-      if (typeFilter === "cake" && order.orderType !== "cake") return false;
-      if (typeFilter === "custom_cake" && order.orderType !== "custom_cake")
+      // Type Filter
+      if (typeFilter !== "all" && order.orderType !== typeFilter) return false;
+      // Date Filter
+      const orderDate = new Date(order.createdAt);
+      if (
+        dateFilter === "today" &&
+        orderDate.toDateString() !== now.toDateString()
+      )
         return false;
-      if (typeFilter === "bakery" && order.orderType !== "bakery") return false;
+      if (dateFilter === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        if (orderDate < weekAgo) return false;
+      }
       return true;
     });
   };
 
   const getStats = () => {
-    // ... logic remains exactly the same as before
     const now = new Date();
     const filteredByTime = orders.filter((order) => {
       const d = new Date(order.createdAt);
@@ -154,15 +176,14 @@ const AdminDashboard = () => {
       (o) => o.orderStatus === "completed",
     );
     const revenue = completed.reduce((acc, curr) => acc + curr.totalPrice, 0);
-
     const breadMap = {};
     const cakeMap = {};
 
     completed.forEach((order) => {
       order.orderItems.forEach((item) => {
-        if (!item.product) return;
-        if (item.product.category === "cake") {
-          const key = item.product.subCategory || "Custom Cake";
+        // Using item.name since product reference might be deleted
+        if (order.orderType === "cake" || order.orderType === "custom_cake") {
+          const key = item.customization?.shape || item.name;
           cakeMap[key] = (cakeMap[key] || 0) + item.quantity;
         } else {
           const key = item.name;
@@ -246,20 +267,31 @@ const AdminDashboard = () => {
             })}
           </div>
 
-          <div className="flex justify-between items-center mb-4 px-1">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 px-1 gap-4">
             <h2 className="text-lg font-bold text-gray-700 capitalize">
               {statusTab.replace("_", " ")} Orders
             </h2>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-white border border-gray-300 text-sm rounded-lg p-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm"
-            >
-              <option value="all">All Types</option>
-              <option value="custom_cake">Custom Cakes</option>
-              <option value="cake">Pre-made Cakes</option>
-              <option value="bakery">Bakery Packs</option>
-            </select>
+            <div className="flex gap-2 w-full md:w-auto">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-white border border-gray-300 text-sm rounded-lg p-2 focus:ring-amber-500 shadow-sm flex-1 md:flex-none"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Past 7 Days</option>
+              </select>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="bg-white border border-gray-300 text-sm rounded-lg p-2 focus:ring-amber-500 shadow-sm flex-1 md:flex-none"
+              >
+                <option value="all">All Types</option>
+                <option value="custom_cake">Custom Cakes</option>
+                <option value="cake">Pre-made Cakes</option>
+                <option value="bakery">Bakery Packs</option>
+              </select>
+            </div>
           </div>
 
           <div className="space-y-4 pb-10">
@@ -289,8 +321,6 @@ const AdminDashboard = () => {
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-medium">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </span>
-
-                      {/* --- NEW ORDER TYPE BADGES --- */}
                       {order.orderType === "custom_cake" ? (
                         <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold border border-purple-200 flex items-center gap-1">
                           <CakeIcon style={{ fontSize: 12 }} /> CUSTOM CAKE
@@ -321,9 +351,17 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2 min-w-[200px]">
-                    <p className="font-bold text-lg text-gray-800">
-                      ₱ {order.totalPrice.toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-gray-500 hover:text-blue-600 flex items-center gap-1 text-xs font-bold transition-colors"
+                      >
+                        <VisibilityOutlinedIcon fontSize="small" /> DETAILS
+                      </button>
+                      <p className="font-bold text-lg text-gray-800">
+                        ₱ {order.totalPrice.toLocaleString()}
+                      </p>
+                    </div>
                     {order.orderStatus === "pending" && (
                       <div className="flex gap-2 w-full">
                         <button
@@ -383,7 +421,275 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Stats View omitted to save space, unchanged from your previous version */}
+      {/* STATISTICS VIEW */}
+      {mainView === "stats" && (
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
+              {["day", "month", "year"].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setStatsPeriod(period)}
+                  className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${statsPeriod === period ? "bg-amber-500 text-white shadow-md" : "text-gray-500 hover:bg-gray-50"}`}
+                >
+                  This {period}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 p-4 opacity-5">
+                <AttachMoneyIcon style={{ fontSize: 100, color: "green" }} />
+              </div>
+              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Revenue
+              </p>
+              <h2 className="text-3xl font-black text-gray-800">
+                ₱ {statsData.revenue.toLocaleString()}
+              </h2>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 p-4 opacity-5">
+                <Inventory2OutlinedIcon
+                  style={{ fontSize: 100, color: "blue" }}
+                />
+              </div>
+              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Total Orders
+              </p>
+              <h2 className="text-3xl font-black text-gray-800">
+                {statsData.total}
+              </h2>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 p-4 opacity-5">
+                <CheckCircleOutlineIcon
+                  style={{ fontSize: 100, color: "orange" }}
+                />
+              </div>
+              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Completed
+              </p>
+              <h2 className="text-3xl font-black text-gray-800">
+                {statsData.completed}
+              </h2>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 p-4 opacity-5">
+                <CancelOutlinedIcon style={{ fontSize: 100, color: "red" }} />
+              </div>
+              <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Rejected
+              </p>
+              <h2 className="text-3xl font-black text-gray-800">
+                {statsData.rejected}
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="md:col-span-2 flex justify-between items-end border-b pb-2">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <TrendingUpIcon className="text-amber-500" /> Product Rankings
+                (Top 10)
+              </h2>
+              <button
+                onClick={() =>
+                  setRankSort(rankSort === "highest" ? "lowest" : "highest")
+                }
+                className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <SortIcon fontSize="small" /> Showing:{" "}
+                {rankSort === "highest" ? "Best Selling" : "Least Selling"}
+              </button>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">
+                Top Bakery Packs
+              </h3>
+              {statsData.breadRank.length === 0 ? (
+                <p className="text-gray-400 text-sm">No sales data.</p>
+              ) : (
+                <div className="space-y-3">
+                  {statsData.breadRank.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${idx < 3 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <span className="text-gray-700 font-medium">
+                          {item.name}
+                        </span>
+                      </span>
+                      <span className="font-bold text-gray-900 bg-gray-50 px-2 py-1 rounded">
+                        {item.count} sold
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">
+                Top Cakes
+              </h3>
+              {statsData.cakeRank.length === 0 ? (
+                <p className="text-gray-400 text-sm">No sales data.</p>
+              ) : (
+                <div className="space-y-3">
+                  {statsData.cakeRank.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${idx < 3 ? "bg-pink-100 text-pink-700" : "bg-gray-100 text-gray-600"}`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <span className="text-gray-700 font-medium">
+                          {item.name}
+                        </span>
+                      </span>
+                      <span className="font-bold text-gray-900 bg-gray-50 px-2 py-1 rounded">
+                        {item.count} sold
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- ORDER DETAILS MODAL --- */}
+      <Dialog
+        open={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedOrder && (
+          <>
+            <DialogTitle className="flex justify-between items-center font-bold border-b pb-4">
+              <span>Order #{selectedOrder._id.slice(-6).toUpperCase()}</span>
+              <IconButton onClick={() => setSelectedOrder(null)}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">
+                    Customer Info
+                  </h4>
+                  <p className="font-bold text-gray-800">
+                    {selectedOrder.user?.firstName}{" "}
+                    {selectedOrder.user?.lastName}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedOrder.user?.email}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedOrder.user?.contactNumber || "No contact info"}
+                  </p>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                  <h4 className="text-xs font-bold text-amber-700 uppercase mb-2">
+                    Pickup Details
+                  </h4>
+                  <p className="font-bold text-gray-800">
+                    Date:{" "}
+                    {new Date(selectedOrder.pickupDate).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm text-gray-800 font-bold">
+                    Time: {selectedOrder.pickupTime}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-2 capitalize border-t border-amber-200 pt-1">
+                    Payment: {selectedOrder.paymentMethod} (
+                    {selectedOrder.paymentStatus})
+                  </p>
+                </div>
+              </div>
+
+              <h4 className="font-bold text-gray-800 border-b pb-2 mb-4">
+                Order Items
+              </h4>
+              <div className="space-y-4">
+                {selectedOrder.orderItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row gap-4"
+                  >
+                    <div className="flex-1">
+                      <h5 className="font-bold text-gray-800 text-lg">
+                        <span className="text-amber-500 mr-2">
+                          {item.quantity}x
+                        </span>
+                        {item.name}
+                      </h5>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Price per unit: ₱{item.price}
+                      </p>
+
+                      {/* Show Customizations if they exist */}
+                      {item.customization &&
+                        Object.keys(item.customization).length > 0 && (
+                          <div className="bg-purple-50 border border-purple-100 p-3 rounded-lg mt-2">
+                            <p className="text-xs font-bold text-purple-700 uppercase tracking-widest mb-2">
+                              Customization Details
+                            </p>
+                            <ul className="text-sm text-gray-700 space-y-1 list-disc pl-4">
+                              {item.customization.flavor && (
+                                <li>
+                                  <b>Flavor:</b> {item.customization.flavor}
+                                </li>
+                              )}
+                              {item.customization.shape && (
+                                <li>
+                                  <b>Shape:</b> {item.customization.shape}
+                                </li>
+                              )}
+                              {item.customization.tiers &&
+                                item.customization.tiers !== "N/A" && (
+                                  <li>
+                                    <b>Tiers:</b> {item.customization.tiers}
+                                  </li>
+                                )}
+                              {item.customization.message && (
+                                <li>
+                                  <b>Dedication:</b> "
+                                  {item.customization.message}"
+                                </li>
+                              )}
+                              {item.customization.notes && (
+                                <li>
+                                  <b>Notes:</b> {item.customization.notes}
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-800">
+                        ₱{(item.price * item.quantity).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
     </div>
   );
 };

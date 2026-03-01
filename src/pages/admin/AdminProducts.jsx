@@ -20,7 +20,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import GridViewIcon from "@mui/icons-material/GridView";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const AdminProducts = () => {
@@ -98,13 +97,22 @@ const AdminProducts = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // NEW: Restrict to 2MB to prevent upload crashes
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size exceeds 2MB. Please upload a smaller image.");
+        return;
+      }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    let value = e.target.value;
+    // NEW: Prevent negative numbers on the frontend directly
+    if (e.target.type === "number" && Number(value) < 0) value = 0;
+    setFormData({ ...formData, [e.target.name]: value });
+  };
 
   const openRestockModal = (product) => {
     setRestockData({
@@ -140,6 +148,8 @@ const AdminProducts = () => {
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.price || !formData.description)
       return alert("Please fill in required fields");
+    if (!editMode && !imageFile) return alert("Please upload a product image");
+
     setSubmitting(true);
     const data = new FormData();
     data.append("name", formData.name);
@@ -147,7 +157,7 @@ const AdminProducts = () => {
     data.append("countInStock", Number(formData.countInStock));
     data.append("description", formData.description);
     data.append("category", formData.category);
-    data.append("piecesPerPack", Number(formData.piecesPerPack) || 1); // Added Pack sizing
+    data.append("piecesPerPack", Number(formData.piecesPerPack) || 1);
 
     if (formData.category === "cake") {
       if (formData.subCategory)
@@ -175,14 +185,17 @@ const AdminProducts = () => {
       fetchProducts();
       resetForm();
     } catch {
-      alert("Error saving product");
+      alert("Error saving product. Please check your inputs.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
+    if (
+      !window.confirm("Delete this product? It will be hidden from the store.")
+    )
+      return;
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
       fetchProducts();
@@ -394,14 +407,16 @@ const AdminProducts = () => {
                       className="text-gray-300 mb-2"
                       style={{ fontSize: 40 }}
                     />
-                    <p className="text-xs text-gray-500">Click to upload</p>
+                    <p className="text-xs text-gray-500">
+                      Click to upload (Max 2MB)
+                    </p>
                   </div>
                 )}
                 <input
                   id="fileInput"
                   type="file"
                   hidden
-                  accept="image/*"
+                  accept="image/jpeg, image/png, image/jpg"
                   onChange={handleFileChange}
                 />
               </div>
@@ -424,6 +439,7 @@ const AdminProducts = () => {
                   value={formData.price}
                   onChange={handleChange}
                   InputProps={{
+                    inputProps: { min: 0 },
                     startAdornment: (
                       <InputAdornment position="start">₱</InputAdornment>
                     ),
@@ -436,6 +452,7 @@ const AdminProducts = () => {
                   fullWidth
                   value={formData.countInStock}
                   onChange={handleChange}
+                  InputProps={{ inputProps: { min: 0 } }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -451,7 +468,6 @@ const AdminProducts = () => {
                   <MenuItem value="cake">Cake</MenuItem>
                 </TextField>
 
-                {/* NEW: PIECES PER PACK FOR BAKERY */}
                 {formData.category === "bakery" && (
                   <TextField
                     label="Pieces per Pack"
@@ -541,9 +557,11 @@ const AdminProducts = () => {
             fullWidth
             autoFocus
             value={restockData.addAmount}
-            onChange={(e) =>
-              setRestockData({ ...restockData, addAmount: e.target.value })
-            }
+            onChange={(e) => {
+              if (Number(e.target.value) >= 0)
+                setRestockData({ ...restockData, addAmount: e.target.value });
+            }}
+            InputProps={{ inputProps: { min: 1 } }}
           />
         </DialogContent>
         <DialogActions>
