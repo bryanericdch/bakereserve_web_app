@@ -4,6 +4,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
@@ -36,6 +38,13 @@ const AdminDashboard = () => {
   const [rankSort, setRankSort] = useState("highest");
 
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // NEW: State for Custom Cancel Modal
+  const [confirmCancel, setConfirmCancel] = useState({
+    open: false,
+    id: null,
+    status: null,
+  });
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -113,7 +122,6 @@ const AdminDashboard = () => {
   ];
 
   const updateStatus = async (id, status) => {
-    // FIX: Removed window.confirm so it never gets blocked by the browser!
     setActionLoading(id);
     try {
       await axios.put(`${API_URL}/orders/${id}/status`, { status }, config);
@@ -137,9 +145,9 @@ const AdminDashboard = () => {
       if (statusTab === "rejected") {
         if (!["rejected", "cancelled"].includes(order.orderStatus))
           return false;
-      } else if (statusTab !== "all" && order.orderStatus !== statusTab) {
+      } else if (statusTab !== "all" && order.orderStatus !== statusTab)
         return false;
-      }
+
       if (typeFilter !== "all" && order.orderType !== typeFilter) return false;
 
       const orderDate = new Date(order.createdAt);
@@ -417,7 +425,7 @@ const AdminDashboard = () => {
                         </button>
                       )}
 
-                      {/* Cancel / Reject Button for ALL Active Stages */}
+                      {/* --- CUSTOM MODAL TRIGGER FOR CANCEL --- */}
                       {[
                         "pending",
                         "approved",
@@ -426,12 +434,14 @@ const AdminDashboard = () => {
                       ].includes(order.orderStatus) && (
                         <button
                           onClick={() =>
-                            updateStatus(
-                              order._id,
-                              order.orderStatus === "pending"
-                                ? "rejected"
-                                : "cancelled",
-                            )
+                            setConfirmCancel({
+                              open: true,
+                              id: order._id,
+                              status:
+                                order.orderStatus === "pending"
+                                  ? "rejected"
+                                  : "cancelled",
+                            })
                           }
                           disabled={actionLoading === order._id}
                           className="px-3 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center"
@@ -614,6 +624,54 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* --- CONFIRM CANCEL MODAL --- */}
+      <Dialog
+        open={confirmCancel.open}
+        onClose={() =>
+          setConfirmCancel({ open: false, id: null, status: null })
+        }
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-red-600 border-b pb-3">
+          Confirm Action
+        </DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="text-gray-700 mb-2">
+            Are you sure you want to{" "}
+            <b>{confirmCancel.status === "rejected" ? "reject" : "cancel"}</b>{" "}
+            this order?
+          </p>
+          <p className="text-xs text-gray-500">
+            This action cannot be undone, and the customer will be notified of
+            the update.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() =>
+              setConfirmCancel({ open: false, id: null, status: null })
+            }
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Go Back
+          </Button>
+          <Button
+            onClick={() => {
+              updateStatus(confirmCancel.id, confirmCancel.status);
+              setConfirmCancel({ open: false, id: null, status: null });
+            }}
+            variant="contained"
+            color="error"
+            sx={{ fontWeight: "bold" }}
+          >
+            Yes, {confirmCancel.status === "rejected" ? "Reject" : "Cancel"}{" "}
+            Order
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* --- ORDER DETAILS MODAL --- */}
       <Dialog

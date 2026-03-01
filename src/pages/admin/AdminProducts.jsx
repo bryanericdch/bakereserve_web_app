@@ -55,6 +55,9 @@ const AdminProducts = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
 
+  // NEW: State for Custom Delete Modal
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
@@ -208,7 +211,6 @@ const AdminProducts = () => {
   };
 
   const handleDelete = async (id) => {
-    // FIX: Removed window.confirm so the browser doesn't block the click!
     setDeletingId(id);
     try {
       await axios.delete(`${API_URL}/products/${id}`, config);
@@ -384,7 +386,9 @@ const AdminProducts = () => {
                     </IconButton>
                     <IconButton
                       color="error"
-                      onClick={() => handleDelete(product._id)}
+                      onClick={() =>
+                        setConfirmDelete({ open: true, id: product._id })
+                      }
                       disabled={deletingId === product._id}
                     >
                       {deletingId === product._id ? (
@@ -629,9 +633,11 @@ const AdminProducts = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Add Daily Slots</DialogTitle>
+        <DialogTitle className="font-bold border-b pb-3">
+          Add Daily Slots
+        </DialogTitle>
         <DialogContent className="pt-4">
-          <p className="mb-4">
+          <p className="mb-4 text-gray-700">
             Add daily capacity for: <b>{restockData.name}</b>
           </p>
           <TextField
@@ -647,14 +653,61 @@ const AdminProducts = () => {
             InputProps={{ inputProps: { min: 1 } }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRestockOpen(false)}>Cancel</Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setRestockOpen(false)}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={submitRestock}
             variant="contained"
-            sx={{ bgcolor: "#111827" }}
+            sx={{ bgcolor: "#111827", fontWeight: "bold" }}
           >
             Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* --- NEW: CONFIRM DELETE PRODUCT MODAL --- */}
+      <Dialog
+        open={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, id: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-red-600 border-b pb-3">
+          Remove Product
+        </DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="text-gray-700">
+            Are you sure you want to remove this product from the menu?
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            This will hide it from customers, but keep it visible in past order
+            records.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() => setConfirmDelete({ open: false, id: null })}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              handleDelete(confirmDelete.id);
+              setConfirmDelete({ open: false, id: null });
+            }}
+            variant="contained"
+            color="error"
+            sx={{ fontWeight: "bold" }}
+          >
+            Yes, Remove It
           </Button>
         </DialogActions>
       </Dialog>
