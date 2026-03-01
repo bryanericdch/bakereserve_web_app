@@ -9,7 +9,6 @@ import Snackbar from "@mui/material/Snackbar";
 import ProductDetailModal from "../components/ProductDetailModal";
 import QuickAddModal from "../components/QuickAddModal";
 
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import EditIcon from "@mui/icons-material/Edit";
 import CakeIcon from "@mui/icons-material/Cake";
@@ -17,7 +16,6 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import landingImage from "../assets/img/landing1.png";
 
-// const API_URL = "http://localhost:5000/api";
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
 const Home = () => {
@@ -190,13 +188,10 @@ const Home = () => {
                 key={product._id}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col group"
               >
+                {/* --- UPDATED: Click image to open details for ALL products --- */}
                 <div
                   className="h-56 w-full bg-gray-100 relative cursor-pointer overflow-hidden"
-                  onClick={() =>
-                    product.category === "cake"
-                      ? setDetailProduct(product)
-                      : setQuickAddProduct(product)
-                  }
+                  onClick={() => setDetailProduct(product)}
                 >
                   <img
                     src={product.image}
@@ -210,15 +205,23 @@ const Home = () => {
                       </span>
                     </div>
                   )}
+                  {/* Subtle hover overlay to indicate it's clickable */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="bg-white/90 text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                      View Details
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg text-gray-900 line-clamp-1">
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    {/* --- UPDATED: Text size and line-clamp so long names fit perfectly --- */}
+                    <h3 className="font-bold text-base leading-tight text-gray-900 line-clamp-2">
                       {product.name}
                     </h3>
+
                     {product.category === "cake" && (
-                      <span className="text-[10px] uppercase font-bold bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full border border-pink-200">
+                      <span className="text-[10px] uppercase font-bold bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full border border-pink-200 whitespace-nowrap h-fit">
                         Cake
                       </span>
                     )}
@@ -247,39 +250,24 @@ const Home = () => {
                     </span>
                   </div>
 
+                  {/* --- UPDATED: Single primary action button --- */}
                   <div className="flex gap-2">
                     {product.category === "cake" ? (
-                      <>
-                        <button
-                          onClick={() => setDetailProduct(product)}
-                          className="flex-1 bg-gray-50 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors border border-gray-200"
-                        >
-                          <VisibilityIcon fontSize="small" /> Details
-                        </button>
-                        <button
-                          onClick={() => handlePersonalize(product)}
-                          disabled={product.countInStock === 0}
-                          className={`flex-1 ${product.countInStock > 0 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all`}
-                        >
-                          <EditIcon fontSize="small" /> Personalize
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handlePersonalize(product)}
+                        disabled={product.countInStock === 0}
+                        className={`w-full ${product.countInStock > 0 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
+                      >
+                        <EditIcon fontSize="small" /> Personalize & Order
+                      </button>
                     ) : (
-                      <>
-                        <button
-                          onClick={() => navigate(`/product/${product._id}`)}
-                          className="flex-1 bg-gray-50 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors border border-gray-200"
-                        >
-                          <VisibilityIcon fontSize="small" /> Details
-                        </button>
-                        <button
-                          onClick={() => setQuickAddProduct(product)}
-                          disabled={product.countInStock === 0}
-                          className={`flex-1 ${product.countInStock > 0 ? "bg-slate-900 hover:bg-slate-800 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all`}
-                        >
-                          <AddShoppingCartIcon fontSize="small" /> Pre-Order
-                        </button>
-                      </>
+                      <button
+                        onClick={() => setQuickAddProduct(product)}
+                        disabled={product.countInStock === 0}
+                        className={`w-full ${product.countInStock > 0 ? "bg-slate-900 hover:bg-slate-800 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
+                      >
+                        <AddShoppingCartIcon fontSize="small" /> Order
+                      </button>
                     )}
                   </div>
                 </div>
@@ -289,12 +277,18 @@ const Home = () => {
         )}
       </div>
 
+      {/* Detail modal now properly passes the quick add function down so Breads can be ordered from the modal */}
       <ProductDetailModal
         open={!!detailProduct}
         onClose={() => setDetailProduct(null)}
         product={detailProduct}
         onPersonalize={handlePersonalize}
+        onQuickAdd={(p) => {
+          setDetailProduct(null);
+          setQuickAddProduct(p);
+        }}
       />
+
       <QuickAddModal
         open={!!quickAddProduct}
         onClose={() => setQuickAddProduct(null)}
