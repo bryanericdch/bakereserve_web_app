@@ -12,6 +12,7 @@ import ProductDetails from "../pages/ProductDetails";
 import AboutUs from "../pages/AboutUs";
 import VerifyEmail from "../pages/VerifyEmail";
 import ForgotPassword from "../pages/ForgotPassword";
+import AdminUsers from "../pages/admin/AdminUsers";
 
 // --- NEW IMPORT ---
 import ResetPassword from "../pages/ResetPassword";
@@ -52,6 +53,7 @@ const AppRoutes = () => {
         <Route element={<AdminLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Route>
       </Route>
 

@@ -69,6 +69,25 @@ const Orders = () => {
 
   const formatStatus = (status) => status.replace(/_/g, " ").toUpperCase();
 
+  const handleCustomerCancel = async (id) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to cancel this order? This cannot be undone.",
+      )
+    )
+      return;
+    try {
+      await axios.put(`${API_URL}/orders/${id}/cancel`, {}, config);
+      alert("Order cancelled successfully.");
+
+      // Refresh orders
+      const { data } = await axios.get(`${API_URL}/orders/my-orders`, config);
+      setOrders(data);
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
       <HomeHeader />
@@ -162,6 +181,15 @@ const Orders = () => {
                       size="small"
                       sx={{ fontWeight: "bold", borderRadius: "8px" }}
                     />
+
+                    {order.orderStatus === "pending" && (
+                      <button
+                        onClick={() => handleCustomerCancel(order._id)}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 underline"
+                      >
+                        Cancel Order
+                      </button>
+                    )}
                   </div>
                 </div>
 

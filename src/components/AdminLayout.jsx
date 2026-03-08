@@ -9,6 +9,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 
 // Icons
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -40,6 +41,7 @@ const AdminLayout = () => {
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/admin/dashboard" },
     { text: "Products", icon: <InventoryIcon />, path: "/admin/products" },
+    { text: "Users", icon: <PeopleAltIcon />, path: "/admin/users" },
   ];
 
   // Sidebar Content

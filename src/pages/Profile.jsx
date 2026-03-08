@@ -184,7 +184,21 @@ const Profile = () => {
             {message.text}
           </Alert>
         )}
+        {userInfo.accountStatus === "warned" && (
+          <Alert severity="warning" className="mb-6 font-medium">
+            <strong>⚠ Account Warning:</strong>{" "}
+            {userInfo.warningMessage ||
+              "Your account has received a warning due to policy violations."}
+          </Alert>
+        )}
 
+        {message.text && (
+          <Alert severity={message.type} className="mb-4">
+            {message.text}
+          </Alert>
+        )}
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"></div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-amber-50 px-8 py-10 flex flex-col items-center border-b border-amber-100 relative">
             {!userInfo.address && !isEditing && (
