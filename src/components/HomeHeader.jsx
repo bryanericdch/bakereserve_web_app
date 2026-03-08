@@ -13,7 +13,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import Popover from "@mui/material/Popover";
-import Badge from "@mui/material/Badge"; // <-- ADDED BADGE
+import Badge from "@mui/material/Badge";
 
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
@@ -31,10 +31,13 @@ const HomeHeader = () => {
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-  useEffect(() => {
-    if (!userInfo.token) return;
+  // Define config outside useEffect so handleReadNotif can use it
+  const config = userInfo?.token
+    ? { headers: { Authorization: `Bearer ${userInfo.token}` } }
+    : null;
 
-    const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+  useEffect(() => {
+    if (!config) return;
 
     const fetchCartCount = async () => {
       try {
@@ -58,7 +61,7 @@ const HomeHeader = () => {
 
     fetchCartCount();
     fetchNotifs();
-  }, [location.pathname]);
+  }, [location.pathname]); // Re-run if path changes
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
@@ -105,18 +108,35 @@ const HomeHeader = () => {
     }
   };
 
-  const handleReadNotif = async (notif) => {
-    if (notif.isRead) return;
+  const handleReadNotif = async (notification) => {
     try {
-      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      await axios.put(`${API_URL}/notifications/${notif._id}/read`, {}, config);
-      setNotifications(
-        notifications.map((n) =>
-          n._id === notif._id ? { ...n, isRead: true } : n,
-        ),
-      );
-    } catch {
-      console.error("Failed to mark as read");
+      // 1. Mark as read in the backend
+      if (!notification.isRead && config) {
+        await axios.put(
+          `${API_URL}/notifications/${notification._id}/read`,
+          {},
+          config,
+        );
+
+        // Update local state immediately without needing to re-fetch
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n._id === notification._id ? { ...n, isRead: true } : n,
+          ),
+        );
+      }
+
+      // 2. Close the notification menu
+      setNotifAnchor(null);
+
+      // 3. Route the user based on the title
+      if (notification.title && notification.title.includes("Warning")) {
+        navigate("/profile");
+      } else {
+        navigate("/orders");
+      }
+    } catch (error) {
+      console.error("Failed to process notification click", error);
     }
   };
 
@@ -127,7 +147,6 @@ const HomeHeader = () => {
           {userInfo.firstName} {userInfo.lastName}
         </h2>
         <p className="text-sm text-gray-500">{userInfo.email}</p>
-        {/* Reminder inside Drawer */}
         {!userInfo.address && (
           <p
             className="text-xs text-red-500 mt-2 font-bold cursor-pointer hover:underline"
@@ -302,9 +321,12 @@ const HomeHeader = () => {
                 <div
                   key={n._id}
                   onClick={() => handleReadNotif(n)}
-                  className={`p-3 border-b text-sm cursor-pointer transition ${n.isRead ? "bg-white opacity-60" : "bg-amber-50/30 font-medium"}`}
+                  className={`p-3 border-b text-sm cursor-pointer transition flex flex-col items-start hover:bg-gray-100 ${n.isRead ? "bg-white opacity-60" : "bg-amber-50/30 font-medium"}`}
                 >
-                  <p className="text-gray-800 m-0">{n.message}</p>
+                  {n.title && (
+                    <p className="font-bold text-gray-800 m-0">{n.title}</p>
+                  )}
+                  <p className="text-gray-700 m-0 mt-1">{n.message}</p>
                   <span className="text-[10px] text-gray-400 mt-1 block">
                     {new Date(n.createdAt).toLocaleDateString()}
                   </span>
@@ -330,7 +352,6 @@ const HomeHeader = () => {
           className="flex items-center gap-2 text-gray-700 hover:text-amber-600 transition-colors p-1"
           onClick={() => setOpenDrawer(true)}
         >
-          {/* --- NEW: RED DOT IF NO ADDRESS --- */}
           <Badge color="error" variant="dot" invisible={!!userInfo.address}>
             <PersonIcon />
           </Badge>

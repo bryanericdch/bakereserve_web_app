@@ -12,6 +12,12 @@ import InputAdornment from "@mui/material/InputAdornment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import {
+  regions,
+  provinces,
+  cities,
+  barangays,
+} from "select-philippines-address";
 
 const API_URL = "https://bakereserve-api.onrender.com/api/auth";
 
@@ -31,6 +37,61 @@ const Auth = () => {
       else navigate("/home");
     }
   }, [navigate]);
+
+  // --- NEW LOCATION STATES ---
+  const [regionData, setRegionData] = useState([]);
+  const [provinceData, setProvinceData] = useState([]);
+  const [cityData, setCityData] = useState([]);
+  const [barangayData, setBarangayData] = useState([]);
+
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedBarangay, setSelectedBarangay] = useState("");
+
+  const [regionName, setRegionName] = useState("");
+  const [provinceName, setProvinceName] = useState("");
+  const [cityName, setCityName] = useState("");
+  const [barangayName, setBarangayName] = useState("");
+
+  // Load Regions on Mount
+  useEffect(() => {
+    regions().then((response) => setRegionData(response));
+  }, []);
+
+  const handleRegionChange = (e) => {
+    const regionCode = e.target.value;
+    const region = regionData.find((r) => r.region_code === regionCode);
+    setSelectedRegion(regionCode);
+    setRegionName(region?.region_name || "");
+    provinces(regionCode).then((response) => setProvinceData(response));
+    setCityData([]);
+    setBarangayData([]); // Reset children
+  };
+
+  const handleProvinceChange = (e) => {
+    const provCode = e.target.value;
+    const prov = provinceData.find((p) => p.province_code === provCode);
+    setSelectedProvince(provCode);
+    setProvinceName(prov?.province_name || "");
+    cities(provCode).then((response) => setCityData(response));
+    setBarangayData([]); // Reset children
+  };
+
+  const handleCityChange = (e) => {
+    const cityCode = e.target.value;
+    const city = cityData.find((c) => c.city_code === cityCode);
+    setSelectedCity(cityCode);
+    setCityName(city?.city_name || "");
+    barangays(cityCode).then((response) => setBarangayData(response));
+  };
+
+  const handleBarangayChange = (e) => {
+    const brgyCode = e.target.value;
+    const brgy = barangayData.find((b) => b.brgy_code === brgyCode);
+    setSelectedBarangay(brgyCode);
+    setBarangayName(brgy?.brgy_name || "");
+  };
 
   const [countryCode, setCountryCode] = useState("+63");
   const [formData, setFormData] = useState({
@@ -106,6 +167,11 @@ const Auth = () => {
         if (data.role === "admin") navigate("/admin/dashboard");
         else navigate("/home");
       } else {
+        if (!selectedProvince || !selectedCity || !selectedBarangay) {
+          return alert("Please complete your address selection.");
+        }
+
+        const fullAddress = `${barangayName}, ${cityName}, ${provinceName}, ${regionName}`;
         const fullContactNumber = `${countryCode}${formData.contactNumber}`;
         const { data } = await axios.post(`${API_URL}/register`, {
           firstName: formData.firstName,
@@ -113,6 +179,7 @@ const Auth = () => {
           email: formData.email,
           contactNumber: fullContactNumber,
           password: formData.password,
+          address: fullAddress,
         });
         alert(
           data.message ||
@@ -256,6 +323,79 @@ const Auth = () => {
                 </button>
               </div>
             )}
+
+            {/* Replace the old Address TextField with this block inside your Sign Up form */}
+            <div className="space-y-3 mb-4">
+              <p className="text-sm font-medium text-gray-700">
+                Delivery Address
+              </p>
+
+              <TextField
+                select
+                fullWidth
+                label="Region"
+                size="small"
+                value={selectedRegion}
+                onChange={handleRegionChange}
+              >
+                {regionData.map((region) => (
+                  <MenuItem key={region.region_code} value={region.region_code}>
+                    {region.region_name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                select
+                fullWidth
+                label="Province"
+                size="small"
+                value={selectedProvince}
+                onChange={handleProvinceChange}
+                disabled={!selectedRegion}
+              >
+                {provinceData.map((province) => (
+                  <MenuItem
+                    key={province.province_code}
+                    value={province.province_code}
+                  >
+                    {province.province_name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                select
+                fullWidth
+                label="City / Municipality"
+                size="small"
+                value={selectedCity}
+                onChange={handleCityChange}
+                disabled={!selectedProvince}
+              >
+                {cityData.map((city) => (
+                  <MenuItem key={city.city_code} value={city.city_code}>
+                    {city.city_name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                select
+                fullWidth
+                label="Barangay"
+                size="small"
+                value={selectedBarangay}
+                onChange={handleBarangayChange}
+                disabled={!selectedCity}
+              >
+                {barangayData.map((brgy) => (
+                  <MenuItem key={brgy.brgy_code} value={brgy.brgy_code}>
+                    {brgy.brgy_name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </div>
 
             {!isLogin && (
               <div className="flex gap-2">
