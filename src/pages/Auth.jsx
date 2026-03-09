@@ -38,7 +38,6 @@ const Auth = () => {
     }
   }, [navigate]);
 
-  // --- NEW LOCATION STATES ---
   const [regionData, setRegionData] = useState([]);
   const [provinceData, setProvinceData] = useState([]);
   const [cityData, setCityData] = useState([]);
@@ -54,7 +53,6 @@ const Auth = () => {
   const [cityName, setCityName] = useState("");
   const [barangayName, setBarangayName] = useState("");
 
-  // Load Regions on Mount
   useEffect(() => {
     regions().then((response) => setRegionData(response));
   }, []);
@@ -66,7 +64,7 @@ const Auth = () => {
     setRegionName(region?.region_name || "");
     provinces(regionCode).then((response) => setProvinceData(response));
     setCityData([]);
-    setBarangayData([]); // Reset children
+    setBarangayData([]);
   };
 
   const handleProvinceChange = (e) => {
@@ -75,7 +73,7 @@ const Auth = () => {
     setSelectedProvince(provCode);
     setProvinceName(prov?.province_name || "");
     cities(provCode).then((response) => setCityData(response));
-    setBarangayData([]); // Reset children
+    setBarangayData([]);
   };
 
   const handleCityChange = (e) => {
@@ -126,7 +124,6 @@ const Auth = () => {
         return false;
       }
 
-      // EXACTLY 10 DIGITS VALIDATION
       const numberRegex = /^\d{10}$/;
       if (!numberRegex.test(formData.contactNumber)) {
         setError("Contact number must be exactly 10 digits.");
@@ -138,7 +135,6 @@ const Auth = () => {
         return false;
       }
 
-      // STRICT ALPHANUMERIC REGEX (Lower, Upper, Number, Special Char)
       const strictPasswordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/;
       if (!strictPasswordRegex.test(formData.password)) {
@@ -199,7 +195,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex w-full h-screen bg-[#FFFBF7] items-center justify-center p-4">
+    <div className="flex w-full min-h-screen bg-[#FFFBF7] items-center justify-center p-4">
       <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
         <IconButton
           onClick={() => navigate("/")}
@@ -223,7 +219,7 @@ const Auth = () => {
           </p>
         </div>
 
-        <div className="w-full md:w-[450px] bg-[#FEFAF6] rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="w-full md:w-[500px] bg-[#FEFAF6] rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex w-full bg-gray-200 rounded-lg p-1 mb-6">
             <button
               className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${isLogin ? "bg-black text-white shadow-md" : "text-gray-600 hover:text-black"}`}
@@ -324,78 +320,86 @@ const Auth = () => {
               </div>
             )}
 
-            {/* Replace the old Address TextField with this block inside your Sign Up form */}
-            <div className="space-y-3 mb-4">
-              <p className="text-sm font-medium text-gray-700">
-                Delivery Address
-              </p>
+            {!isLogin && (
+              <div className="space-y-3 mt-1 mb-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Delivery Address
+                </p>
 
-              <TextField
-                select
-                fullWidth
-                label="Region"
-                size="small"
-                value={selectedRegion}
-                onChange={handleRegionChange}
-              >
-                {regionData.map((region) => (
-                  <MenuItem key={region.region_code} value={region.region_code}>
-                    {region.region_name}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                select
-                fullWidth
-                label="Province"
-                size="small"
-                value={selectedProvince}
-                onChange={handleProvinceChange}
-                disabled={!selectedRegion}
-              >
-                {provinceData.map((province) => (
-                  <MenuItem
-                    key={province.province_code}
-                    value={province.province_code}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <TextField
+                    select
+                    fullWidth
+                    label="Region"
+                    size="small"
+                    value={selectedRegion}
+                    onChange={handleRegionChange}
                   >
-                    {province.province_name}
-                  </MenuItem>
-                ))}
-              </TextField>
+                    {regionData.map((region) => (
+                      <MenuItem
+                        key={region.region_code}
+                        value={region.region_code}
+                      >
+                        {region.region_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-              <TextField
-                select
-                fullWidth
-                label="City / Municipality"
-                size="small"
-                value={selectedCity}
-                onChange={handleCityChange}
-                disabled={!selectedProvince}
-              >
-                {cityData.map((city) => (
-                  <MenuItem key={city.city_code} value={city.city_code}>
-                    {city.city_name}
-                  </MenuItem>
-                ))}
-              </TextField>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Province"
+                    size="small"
+                    value={selectedProvince}
+                    onChange={handleProvinceChange}
+                    disabled={!selectedRegion}
+                  >
+                    {provinceData.map((province) => (
+                      <MenuItem
+                        key={province.province_code}
+                        value={province.province_code}
+                      >
+                        {province.province_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </div>
 
-              <TextField
-                select
-                fullWidth
-                label="Barangay"
-                size="small"
-                value={selectedBarangay}
-                onChange={handleBarangayChange}
-                disabled={!selectedCity}
-              >
-                {barangayData.map((brgy) => (
-                  <MenuItem key={brgy.brgy_code} value={brgy.brgy_code}>
-                    {brgy.brgy_name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <TextField
+                    select
+                    fullWidth
+                    label="City / Municipality"
+                    size="small"
+                    value={selectedCity}
+                    onChange={handleCityChange}
+                    disabled={!selectedProvince}
+                  >
+                    {cityData.map((city) => (
+                      <MenuItem key={city.city_code} value={city.city_code}>
+                        {city.city_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <TextField
+                    select
+                    fullWidth
+                    label="Barangay"
+                    size="small"
+                    value={selectedBarangay}
+                    onChange={handleBarangayChange}
+                    disabled={!selectedCity}
+                  >
+                    {barangayData.map((brgy) => (
+                      <MenuItem key={brgy.brgy_code} value={brgy.brgy_code}>
+                        {brgy.brgy_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </div>
+              </div>
+            )}
 
             {!isLogin && (
               <div className="flex gap-2">
@@ -411,7 +415,6 @@ const Auth = () => {
                     </MenuItem>
                   ))}
                 </Select>
-                {/* SET MAXLENGTH TO 10 */}
                 <TextField
                   label="Contact Number"
                   name="contactNumber"
@@ -421,7 +424,7 @@ const Auth = () => {
                   required
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (/^\d*$/.test(val)) handleChange(e); // Only allow digits
+                    if (/^\d*$/.test(val)) handleChange(e);
                   }}
                   placeholder="9123456789"
                   InputProps={{ inputProps: { maxLength: 10 } }}
