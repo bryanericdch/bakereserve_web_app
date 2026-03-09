@@ -322,10 +322,6 @@ const Auth = () => {
 
             {!isLogin && (
               <div className="space-y-3 mt-1 mb-2">
-                <p className="text-sm font-medium text-gray-700">
-                  Delivery Address
-                </p>
-
                 <div className="flex flex-col sm:flex-row gap-2">
                   <TextField
                     select
