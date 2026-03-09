@@ -21,8 +21,8 @@ const Footer = () => {
             <p className="text-sm text-gray-500">
               📍 Dagupan City, Philippines
             </p>
-            <p className="text-sm text-gray-500">📞 +63 912 345 6789</p>
-            <p className="text-sm text-gray-500">✉️ hello@bakereserve.com</p>
+            <p className="text-sm text-gray-500">📞 +63 945 755 5693</p>
+            <p className="text-sm text-gray-500">✉️ bakereserve@gmail.com</p>
           </div>
         </div>
 

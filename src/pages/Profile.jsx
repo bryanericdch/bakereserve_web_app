@@ -167,7 +167,7 @@ const Profile = () => {
               setIsEditing(!isEditing);
               setMessage({ type: "", text: "" });
             }}
-            className="flex items-center gap-1 text-sm font-bold text-amber-600 hover:text-amber-700 bg-amber-50 px-4 py-2 rounded-full transition-colors"
+            className="flex items-center gap-1 text-sm font-bold text-amber-600 hover:text-amber-700 bg-amber-200 px-4 py-2 rounded transition-colors "
           >
             {isEditing ? (
               "Cancel"
@@ -214,7 +214,7 @@ const Profile = () => {
             <h2 className="text-2xl font-bold text-gray-800">
               {userInfo.firstName} {userInfo.lastName}
             </h2>
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-700 bg-amber-200/50 px-3 py-1 rounded-full mt-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-700  px-3 py-1 rounded-full mt-2">
               {userInfo.role || "Customer"}
             </span>
           </div>
@@ -381,6 +381,7 @@ const Profile = () => {
         <DialogContent className="pt-5 space-y-4">
           {passwordError && <Alert severity="error">{passwordError}</Alert>}
           <TextField
+            margin="normal"
             size="small"
             fullWidth
             label="Current Password"
@@ -406,6 +407,7 @@ const Profile = () => {
             }}
           />
           <TextField
+            margin="normal"
             size="small"
             fullWidth
             label="New Password"

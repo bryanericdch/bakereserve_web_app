@@ -268,19 +268,19 @@ const AdminProducts = () => {
         <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "all" ? "bg-gray-800 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-5 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "all" ? "bg-gray-800 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
           >
             <GridViewIcon fontSize="small" /> All
           </button>
           <button
             onClick={() => setActiveTab("bakery")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "bakery" ? "bg-amber-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-5 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "bakery" ? "bg-amber-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
           >
             <BakeryDiningOutlinedIcon fontSize="small" /> Breads
           </button>
           <button
             onClick={() => setActiveTab("cake")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "cake" ? "bg-pink-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
+            className={`px-5 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all ${activeTab === "cake" ? "bg-pink-500 text-white shadow" : "text-gray-500 hover:bg-gray-50"}`}
           >
             <CakeOutlinedIcon fontSize="small" /> Cakes
           </button>

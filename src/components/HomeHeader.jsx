@@ -29,12 +29,17 @@ const HomeHeader = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [activeTab, setActiveTab] = useState(location.pathname);
+
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-  // Define config outside useEffect so handleReadNotif can use it
   const config = userInfo?.token
     ? { headers: { Authorization: `Bearer ${userInfo.token}` } }
     : null;
+
+  useEffect(() => {
+    setActiveTab(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!config) return;
@@ -61,16 +66,15 @@ const HomeHeader = () => {
 
     fetchCartCount();
     fetchNotifs();
-  }, [location.pathname]); // Re-run if path changes
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
     navigate("/auth");
   };
 
-  const isActive = (path) => location.pathname === path;
-
   const scrollToMenu = () => {
+    setActiveTab("menu");
     if (location.pathname !== "/home") {
       navigate("/home");
       setTimeout(
@@ -88,6 +92,7 @@ const HomeHeader = () => {
   };
 
   const scrollToFooter = () => {
+    setActiveTab("contact");
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     setOpenDrawer(false);
   };
@@ -110,7 +115,6 @@ const HomeHeader = () => {
 
   const handleReadNotif = async (notification) => {
     try {
-      // 1. Mark as read in the backend
       if (!notification.isRead && config) {
         await axios.put(
           `${API_URL}/notifications/${notification._id}/read`,
@@ -118,7 +122,6 @@ const HomeHeader = () => {
           config,
         );
 
-        // Update local state immediately without needing to re-fetch
         setNotifications((prev) =>
           prev.map((n) =>
             n._id === notification._id ? { ...n, isRead: true } : n,
@@ -126,10 +129,8 @@ const HomeHeader = () => {
         );
       }
 
-      // 2. Close the notification menu
       setNotifAnchor(null);
 
-      // 3. Route the user based on the title
       if (notification.title && notification.title.includes("Warning")) {
         navigate("/profile");
       } else {
@@ -224,32 +225,43 @@ const HomeHeader = () => {
     <header className="sticky top-0 z-50 w-full bg-[#FFFBF7] px-4 md:px-6 py-4 flex items-center justify-between shadow-sm">
       <h1
         className="text-xl md:text-2xl font-bold text-amber-600 cursor-pointer"
-        onClick={() => navigate("/home")}
+        onClick={() => {
+          navigate("/home");
+          setActiveTab("/home");
+        }}
       >
-        BakeReserve
+        Bake<span className="text-amber-600">Reserve.</span>
       </h1>
       <nav className="hidden md:flex gap-6 lg:gap-8 text-gray-700 font-medium items-center text-sm lg:text-base">
         <button
-          onClick={() => navigate("/home")}
-          className={`transition ${isActive("/home") ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
+          onClick={() => {
+            navigate("/home");
+            setActiveTab("/home");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`transition ${activeTab === "/home" ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
         >
           Home
         </button>
         <button
           onClick={scrollToMenu}
-          className="hover:text-amber-600 transition"
+          className={`transition ${activeTab === "menu" ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
         >
           Menu
         </button>
         <button
-          onClick={() => navigate("/about")}
-          className={`transition ${isActive("/about") ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
+          onClick={() => {
+            navigate("/about");
+            setActiveTab("/about");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`transition ${activeTab === "/about" ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
         >
           About Us
         </button>
         <button
           onClick={scrollToFooter}
-          className="hover:text-amber-600 transition"
+          className={`transition ${activeTab === "contact" ? "text-amber-600 font-bold" : "hover:text-amber-600"}`}
         >
           Contact Us
         </button>

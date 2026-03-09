@@ -138,7 +138,7 @@ const Home = () => {
         id="menu-section"
         className="flex justify-center mb-6 px-4 pt-4 scroll-mt-24"
       >
-        <div className="bg-white p-1.5 rounded-full inline-flex shadow-sm border border-gray-200">
+        <div className="bg-white p-1.5 rounded-full inline-flex shadow-sm border border-gray-200 px-[25px]">
           {["All products", "Breads", "Cakes"].map((label) => {
             let value = "all";
             if (label === "Breads") value = "bakery";
@@ -147,7 +147,7 @@ const Home = () => {
               <button
                 key={label}
                 onClick={() => setFilter(value)}
-                className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${filter === value ? "bg-amber-500 shadow-md text-white" : "text-gray-500 hover:text-gray-900"}`}
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${filter === value ? " bg-amber-500 shadow-md text-white rounded" : "text-gray-500 hover:text-gray-900"}`}
               >
                 {label}
               </button>
@@ -216,9 +216,9 @@ const Home = () => {
                 <div className="p-5 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2 gap-2">
                     {/* --- UPDATED: Text size and line-clamp so long names fit perfectly --- */}
-                    <h3 className="font-bold text-base leading-tight text-gray-900 line-clamp-2">
+                    <h4 className="font-bold text-base leading-tight text-gray-900 line-clamp-2">
                       {product.name}
-                    </h3>
+                    </h4>
 
                     {product.category === "cake" && (
                       <span className="text-[10px] uppercase font-bold bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full border border-pink-200 whitespace-nowrap h-fit">
@@ -232,7 +232,7 @@ const Home = () => {
 
                   <div className="mt-auto flex items-center justify-between mb-5">
                     <div>
-                      <span className="text-amber-600 font-bold text-xl">
+                      <span className="text-red-500 font-bold text-xl">
                         ₱ {product.price}
                       </span>
                       {product.category === "bakery" && (
@@ -256,17 +256,17 @@ const Home = () => {
                       <button
                         onClick={() => handlePersonalize(product)}
                         disabled={product.countInStock === 0}
-                        className={`w-full ${product.countInStock > 0 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
+                        className={`w-full ${product.countInStock > 0 ? "bg-red-500 hover:bg-red-600 text-white shadow-md rounded" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
                       >
-                        <EditIcon fontSize="small" /> Personalize & Order
+                        Personalize
                       </button>
                     ) : (
                       <button
                         onClick={() => setQuickAddProduct(product)}
                         disabled={product.countInStock === 0}
-                        className={`w-full ${product.countInStock > 0 ? "bg-slate-900 hover:bg-slate-800 text-white shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
+                        className={`w-full ${product.countInStock > 0 ? "bg-red-500 hover:bg-red-600 text-white shadow-md rounded" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
                       >
-                        <AddShoppingCartIcon fontSize="small" /> Order
+                        Order
                       </button>
                     )}
                   </div>

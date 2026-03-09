@@ -227,7 +227,6 @@ const AdminDashboard = () => {
   const statsData = getStats();
 
   const rejectionReasons = [
-    "Delivery address is out of our shop range.",
     "Selected items are unexpectedly out of stock.",
     "Store is currently fully booked for the selected date.",
     "Custom cake instructions cannot be accommodated.",
@@ -241,13 +240,13 @@ const AdminDashboard = () => {
         <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm flex">
           <button
             onClick={() => setMainView("manage")}
-            className={`px-6 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${mainView === "manage" ? "bg-slate-800 text-white" : "text-gray-500 hover:bg-gray-100"}`}
+            className={`px-6 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mainView === "manage" ? "bg-slate-800 text-white" : "text-gray-500 hover:bg-gray-100"}`}
           >
             <Inventory2OutlinedIcon fontSize="small" /> Manage
           </button>
           <button
             onClick={() => setMainView("stats")}
-            className={`px-6 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${mainView === "stats" ? "bg-slate-800 text-white" : "text-gray-500 hover:bg-gray-100"}`}
+            className={`px-6 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mainView === "stats" ? "bg-slate-800 text-white" : "text-gray-500 hover:bg-gray-100"}`}
           >
             <TrendingUpIcon fontSize="small" /> Statistics
           </button>
@@ -502,7 +501,7 @@ const AdminDashboard = () => {
                 <button
                   key={period}
                   onClick={() => setStatsPeriod(period)}
-                  className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${statsPeriod === period ? "bg-amber-500 text-white shadow-md" : "text-gray-500 hover:bg-gray-50"}`}
+                  className={`px-6 py-2 rounded text-sm font-bold capitalize transition-all ${statsPeriod === period ? "bg-amber-500 text-white shadow-md" : "text-gray-500 hover:bg-gray-50"}`}
                 >
                   This {period}
                 </button>
@@ -749,7 +748,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
                   <h4 className="text-xs font-bold text-amber-700 uppercase mb-2">
-                    Pickup/Delivery Details
+                    Pickup Details
                   </h4>
                   <p className="font-bold text-gray-800">
                     Date:{" "}

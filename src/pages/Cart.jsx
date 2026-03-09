@@ -306,6 +306,7 @@ const Cart = () => {
 
               <div className="space-y-4 mb-6">
                 <TextField
+                  margin="normal"
                   type="date"
                   fullWidth
                   size="small"

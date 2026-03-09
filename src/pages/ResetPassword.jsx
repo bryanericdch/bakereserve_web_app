@@ -88,6 +88,7 @@ const ResetPassword = () => {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
           <TextField
+            margin="normal"
             label="New Password"
             type={showPassword ? "text" : "password"}
             size="small"
@@ -116,6 +117,7 @@ const ResetPassword = () => {
           />
 
           <TextField
+            margin="normal"
             label="Confirm New Password"
             type={showPassword ? "text" : "password"}
             size="small"

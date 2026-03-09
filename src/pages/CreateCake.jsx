@@ -158,9 +158,11 @@ const CreateCake = () => {
             </h3>
 
             <TextField
+              margin="normal"
               select
               fullWidth
               label="Cake Size"
+              helperText={"Please select a design reference first."}
               name="size"
               value={build.size}
               onChange={handleChange}
@@ -182,6 +184,7 @@ const CreateCake = () => {
             </TextField>
 
             <TextField
+              margin="normal"
               select
               fullWidth
               label="Cake Shape / Type"
@@ -197,6 +200,7 @@ const CreateCake = () => {
             </TextField>
 
             <TextField
+              margin="normal"
               select
               fullWidth
               label="Flavor"
@@ -213,6 +217,7 @@ const CreateCake = () => {
 
             {build.shape === "Tiered Cake" && (
               <TextField
+                margin="normal"
                 select
                 fullWidth
                 label="Number of Tiers"
@@ -232,6 +237,7 @@ const CreateCake = () => {
               3. Personalize
             </h3>
             <TextField
+              margin="normal"
               fullWidth
               label="Dedication Message"
               name="message"
@@ -239,6 +245,7 @@ const CreateCake = () => {
               onChange={handleChange}
             />
             <TextField
+              margin="normal"
               fullWidth
               multiline
               rows={3}
@@ -265,8 +272,8 @@ const CreateCake = () => {
               fullWidth
               onClick={addToCart}
               sx={{
-                bgcolor: "#D97706",
-                "&:hover": { bgcolor: "#B45309" },
+                bgcolor: "#F44336",
+                "&:hover": { bgcolor: "#E53935" },
                 py: 2,
                 fontWeight: "bold",
               }}

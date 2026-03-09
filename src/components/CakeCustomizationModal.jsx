@@ -99,6 +99,7 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
         <div className="flex flex-col gap-5">
           {/* Dedication */}
           <TextField
+            margin="normal"
             label="Dedication / Message"
             name="message"
             fullWidth
@@ -118,6 +119,7 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
           {/* Flavor & Shape Grid */}
           <div className="grid grid-cols-2 gap-4">
             <TextField
+              margin="normal"
               select
               label="Flavor"
               name="flavor"
@@ -133,6 +135,7 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
             </TextField>
 
             <TextField
+              margin="normal"
               select
               label="Shape"
               name="shape"
@@ -150,6 +153,7 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
 
           {/* Color Theme */}
           <TextField
+            margin="normal"
             label="Theme Colors"
             name="color"
             fullWidth
@@ -167,6 +171,7 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
 
           {/* Notes */}
           <TextField
+            margin="normal"
             label="Special Instructions"
             name="notes"
             fullWidth

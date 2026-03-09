@@ -49,9 +49,9 @@ const AdminLayout = () => {
     <div className="flex flex-col h-full bg-slate-900 text-white">
       {/* Logo Area */}
       <div className="p-6 text-center border-b border-slate-700">
-        <h1 className="text-2xl font-bold text-amber-500 tracking-wider">
-          BakeReserve
-        </h1>
+        <h3 className="text-2xl font-bold text-amber-500 tracking-wider">
+          Bake<span className="text-amber-500">Reserve</span>
+        </h3>
         <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest">
           Admin Panel
         </p>

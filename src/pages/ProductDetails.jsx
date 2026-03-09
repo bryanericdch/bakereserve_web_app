@@ -198,6 +198,7 @@ const ProductDetails = () => {
                 />
                 {product.subCategory === "Tiered Cake" && (
                   <TextField
+                    margin="normal"
                     select
                     fullWidth
                     label="Number of Tiers"
@@ -212,6 +213,7 @@ const ProductDetails = () => {
                   </TextField>
                 )}
                 <TextField
+                  margin="normal"
                   fullWidth
                   multiline
                   rows={2}
