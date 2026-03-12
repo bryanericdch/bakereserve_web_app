@@ -133,16 +133,28 @@ const Cart = () => {
       }
 
       if (paymentMethod === "ewallet") {
+        // --- NEW: Combine first and last name ---
+        const userName = `${userInfo.firstName} ${userInfo.lastName}`;
+
         const intentRes = await axios.post(
           `${API_URL}/payments/intent`,
-          { orderIds },
+          {
+            orderIds,
+            customerName: userName, // <--- ADDED
+            customerEmail: userInfo.email, // <--- ADDED
+          },
           config,
         );
         const paymentIntentId = intentRes.data.data.id;
 
         const methodRes = await axios.post(
           `${API_URL}/payments/method`,
-          { type: eWalletType },
+          {
+            type: eWalletType,
+            name: userName, // <--- ADDED
+            email: userInfo.email, // <--- ADDED
+            phone: userInfo.contactNumber, // <--- ADDED
+          },
           config,
         );
         const paymentMethodId = methodRes.data.data.id;
