@@ -23,6 +23,10 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    productId: null,
+  });
 
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
@@ -80,21 +84,23 @@ const Cart = () => {
     }
   };
 
-  const removeItem = async (productId) => {
-    if (!window.confirm("Remove this item?")) return;
+  const removeItem = async () => {
     setProcessing(true);
     try {
       const { data } = await axios.delete(
-        `${API_URL}/cart/${productId}`,
+        `${API_URL}/cart/${deleteModal.productId}`,
         config,
       );
       setCartItems(data.items);
-      const item = cartItems.find((i) => i.product._id === productId);
+      const item = cartItems.find(
+        (i) => i.product._id === deleteModal.productId,
+      );
       if (item) setSelectedItems(selectedItems.filter((id) => id !== item._id));
     } catch {
       console.error("Remove failed");
     } finally {
       setProcessing(false);
+      setDeleteModal({ open: false, productId: null });
     }
   };
 
@@ -302,7 +308,12 @@ const Cart = () => {
                     </div>
                     <IconButton
                       size="small"
-                      onClick={() => removeItem(item.product._id)}
+                      onClick={() =>
+                        setDeleteModal({
+                          open: true,
+                          productId: item.product._id,
+                        })
+                      }
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -419,6 +430,40 @@ const Cart = () => {
           </div>
         )}
       </div>
+      {/* Remove Item Modal */}
+      <Dialog
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, productId: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-red-600 border-b pb-3">
+          Remove Item
+        </DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="text-gray-700">
+            Are you sure you want to remove this item from your cart?
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() => setDeleteModal({ open: false, productId: null })}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={removeItem}
+            variant="contained"
+            color="error"
+            disabled={processing}
+            sx={{ fontWeight: "bold" }}
+          >
+            {processing ? "Removing..." : "Remove"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

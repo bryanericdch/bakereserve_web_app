@@ -8,6 +8,10 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
@@ -15,6 +19,10 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active");
+  const [cancelModal, setCancelModal] = useState({
+    open: false,
+    orderId: null,
+  });
 
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -69,22 +77,19 @@ const Orders = () => {
 
   const formatStatus = (status) => status.replace(/_/g, " ").toUpperCase();
 
-  const handleCustomerCancel = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to cancel this order? This cannot be undone.",
-      )
-    )
-      return;
+  const executeCancelOrder = async () => {
     try {
-      await axios.put(`${API_URL}/orders/${id}/cancel`, {}, config);
-      alert("Order cancelled successfully.");
-
-      // Refresh orders
+      await axios.put(
+        `${API_URL}/orders/${cancelModal.orderId}/cancel`,
+        {},
+        config,
+      );
       const { data } = await axios.get(`${API_URL}/orders/my-orders`, config);
       setOrders(data);
     } catch (error) {
       alert(error.response?.data?.message || "Failed to cancel order.");
+    } finally {
+      setCancelModal({ open: false, orderId: null });
     }
   };
 
@@ -184,7 +189,9 @@ const Orders = () => {
 
                     {order.orderStatus === "pending" && (
                       <button
-                        onClick={() => handleCustomerCancel(order._id)}
+                        onClick={() =>
+                          setCancelModal({ open: true, orderId: order._id })
+                        }
                         className="text-xs font-bold text-red-500 hover:text-red-700 underline"
                       >
                         Cancel Order
@@ -277,6 +284,40 @@ const Orders = () => {
           </div>
         )}
       </div>
+      {/* Cancel Order Modal */}
+      <Dialog
+        open={cancelModal.open}
+        onClose={() => setCancelModal({ open: false, orderId: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-red-600 border-b pb-3">
+          Cancel Order
+        </DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="text-gray-700">
+            Are you sure you want to cancel this order? This action cannot be
+            undone.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() => setCancelModal({ open: false, orderId: null })}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Keep Order
+          </Button>
+          <Button
+            onClick={executeCancelOrder}
+            variant="contained"
+            color="error"
+            sx={{ fontWeight: "bold" }}
+          >
+            Yes, Cancel Order
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

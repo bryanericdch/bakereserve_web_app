@@ -22,6 +22,7 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ open: false, userId: null });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -73,18 +74,14 @@ const AdminUsers = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to permanently delete this user? This cannot be undone.",
-      )
-    )
-      return;
+  const executeDelete = async () => {
     try {
-      await axios.delete(`${API_URL}/users/${id}`, config);
+      await axios.delete(`${API_URL}/users/${deleteModal.userId}`, config);
       fetchUsers();
     } catch (error) {
       alert("Failed to delete user.");
+    } finally {
+      setDeleteModal({ open: false, userId: null });
     }
   };
 
@@ -170,7 +167,9 @@ const AdminUsers = () => {
                       </IconButton>
                       <IconButton
                         color="error"
-                        onClick={() => handleDelete(user._id)}
+                        onClick={() =>
+                          setDeleteModal({ open: true, userId: user._id })
+                        }
                       >
                         <DeleteOutlineIcon />
                       </IconButton>
@@ -240,6 +239,43 @@ const AdminUsers = () => {
             sx={{ bgcolor: "#111827" }}
           >
             {actionLoading ? "Saving..." : "Update Status"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Delete User Modal */}
+      <Dialog
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, userId: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-bold text-red-600 border-b pb-3">
+          Delete User Account
+        </DialogTitle>
+        <DialogContent className="pt-4">
+          <p className="text-gray-700">
+            Are you sure you want to permanently delete this user?
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            This action is irreversible and will remove their access to the
+            system entirely.
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: "1px solid #f3f4f6" }}>
+          <Button
+            onClick={() => setDeleteModal({ open: false, userId: null })}
+            color="inherit"
+            sx={{ fontWeight: "bold" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={executeDelete}
+            variant="contained"
+            color="error"
+            sx={{ fontWeight: "bold" }}
+          >
+            Delete Account
           </Button>
         </DialogActions>
       </Dialog>
