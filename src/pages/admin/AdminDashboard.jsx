@@ -415,7 +415,7 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => updateStatus(order._id, "approved")}
                           disabled={actionLoading === order._id}
-                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-slate-900 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-slate-700 shadow-sm transition disabled:opacity-50 px-2.5"
                         >
                           {actionLoading === order._id ? (
                             <CircularProgress size={16} color="inherit" />
@@ -428,7 +428,7 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => updateStatus(order._id, "in_process")}
                           disabled={actionLoading === order._id}
-                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition disabled:opacity-50 px-2.5"
                         >
                           {actionLoading === order._id ? (
                             <CircularProgress size={16} color="inherit" />
@@ -443,7 +443,7 @@ const AdminDashboard = () => {
                             updateStatus(order._id, "ready_for_pickup")
                           }
                           disabled={actionLoading === order._id}
-                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition disabled:opacity-50"
+                          className="flex-1 bg-purple-600 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 shadow-sm transition disabled:opacity-50 px-2.5"
                         >
                           {actionLoading === order._id ? (
                             <CircularProgress size={16} color="inherit" />
