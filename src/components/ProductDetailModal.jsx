@@ -85,12 +85,12 @@ const ProductDetailModal = ({
                 onPersonalize(product);
               }}
               sx={{
-                bgcolor: "#D97706",
-                "&:hover": { bgcolor: "#B45309" },
+                bgcolor: "#f56565",
+                "&:hover": { bgcolor: "#e53e3e" },
                 fontWeight: "bold",
               }}
             >
-              Personalize & Reserve
+              Personalize & Order
             </Button>
           ) : (
             <Button
