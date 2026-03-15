@@ -145,9 +145,7 @@ const AdminUsers = () => {
                         {user.cancellationCount}
                       </span>
                       {user.cancellationCount >= 3 && (
-                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">
-                          High Risk
-                        </p>
+                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1"></p>
                       )}
                     </td>
                     <td className="p-4 text-center">
