@@ -37,10 +37,17 @@ const AdminDashboard = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
 
-  // --- NEW: Custom Stats Period States ---
+  const today = new Date();
   const [statsPeriod, setStatsPeriod] = useState("month");
-  const [selectedCustomMonth, setSelectedCustomMonth] = useState("");
-  const [selectedCustomYear, setSelectedCustomYear] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    today.toISOString().split("T")[0],
+  );
+  const [selectedMonth, setSelectedMonth] = useState(
+    today.toISOString().slice(0, 7),
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    today.getFullYear().toString(),
+  );
 
   const [rankSort, setRankSort] = useState("highest");
 
@@ -177,30 +184,30 @@ const AdminDashboard = () => {
   };
 
   const getStats = () => {
-    const now = new Date();
-
-    // --- UPDATED: Enhanced Filter Logic for Custom Dates ---
     const filteredByTime = orders.filter((order) => {
       const d = new Date(order.createdAt);
 
-      if (statsPeriod === "day") return d.toDateString() === now.toDateString();
-      if (statsPeriod === "month")
+      if (statsPeriod === "day") {
+        if (!selectedDate) return true;
+        const [y, m, day] = selectedDate.split("-");
         return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      if (statsPeriod === "year") return d.getFullYear() === now.getFullYear();
-
-      if (statsPeriod === "custom_month" && selectedCustomMonth) {
-        const [yyyy, mm] = selectedCustomMonth.split("-");
-        return (
-          d.getFullYear() === parseInt(yyyy) &&
-          d.getMonth() === parseInt(mm) - 1
+          d.getFullYear() === parseInt(y) &&
+          d.getMonth() === parseInt(m) - 1 &&
+          d.getDate() === parseInt(day)
         );
       }
 
-      if (statsPeriod === "custom_year" && selectedCustomYear) {
-        return d.getFullYear() === parseInt(selectedCustomYear);
+      if (statsPeriod === "month") {
+        if (!selectedMonth) return true;
+        const [y, m] = selectedMonth.split("-");
+        return (
+          d.getFullYear() === parseInt(y) && d.getMonth() === parseInt(m) - 1
+        );
+      }
+
+      if (statsPeriod === "year") {
+        if (!selectedYear) return true;
+        return d.getFullYear() === parseInt(selectedYear);
       }
 
       return true;
@@ -511,51 +518,58 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* STATISTICS VIEW */}
       {mainView === "stats" && (
         <div className="max-w-7xl mx-auto">
-          {/* --- UPDATED: Date Filter Controls --- */}
-          <div className="flex flex-col md:flex-row justify-center md:justify-between items-center mb-8 gap-4">
-            <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
-              {["day", "month", "year"].map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setStatsPeriod(period)}
-                  className={`px-6 py-2 rounded text-sm font-bold capitalize transition-all ${statsPeriod === period ? "bg-amber-500 text-white shadow-md" : "text-gray-500 hover:bg-gray-50"}`}
-                >
-                  This {period}
-                </button>
-              ))}
-            </div>
+          <div className="flex justify-center mb-8">
+            <div className="flex gap-0 items-center bg-white p-1 rounded-xl shadow-sm border border-gray-200 w-fit">
+              <TextField
+                select
+                size="small"
+                value={statsPeriod}
+                onChange={(e) => setStatsPeriod(e.target.value)}
+                sx={{
+                  minWidth: 130,
+                  "& fieldset": { border: "none" },
+                  "& .MuiSelect-select": {
+                    fontWeight: "bold",
+                    color: "#4B5563",
+                  },
+                }}
+              >
+                <MenuItem value="day">Daily</MenuItem>
+                <MenuItem value="month">Monthly</MenuItem>
+                <MenuItem value="year">Yearly</MenuItem>
+              </TextField>
 
-            <div className="flex gap-3">
-              <TextField
-                type="month"
-                label="Specific Month"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={
-                  statsPeriod === "custom_month" ? selectedCustomMonth : ""
-                }
-                onChange={(e) => {
-                  setStatsPeriod("custom_month");
-                  setSelectedCustomMonth(e.target.value);
-                }}
-                sx={{ bgcolor: "white", borderRadius: 1 }}
-              />
-              <TextField
-                type="number"
-                label="Specific Year"
-                size="small"
-                placeholder="e.g. 2026"
-                InputLabelProps={{ shrink: true }}
-                value={statsPeriod === "custom_year" ? selectedCustomYear : ""}
-                onChange={(e) => {
-                  setStatsPeriod("custom_year");
-                  setSelectedCustomYear(e.target.value);
-                }}
-                sx={{ bgcolor: "white", borderRadius: 1, width: "120px" }}
-              />
+              <div className="w-[1px] h-8 bg-gray-200 mx-1"></div>
+
+              {statsPeriod === "day" && (
+                <TextField
+                  type="date"
+                  size="small"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  sx={{ "& fieldset": { border: "none" } }}
+                />
+              )}
+              {statsPeriod === "month" && (
+                <TextField
+                  type="month"
+                  size="small"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  sx={{ "& fieldset": { border: "none" } }}
+                />
+              )}
+              {statsPeriod === "year" && (
+                <TextField
+                  type="number"
+                  size="small"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  sx={{ "& fieldset": { border: "none" } }}
+                />
+              )}
             </div>
           </div>
 
