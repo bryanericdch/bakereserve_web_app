@@ -145,12 +145,6 @@ const AdminLayout = () => {
           </ListItem>
         ))}
       </List>
-      <div className="p-4 border-t border-slate-700 text-center">
-        <p className="text-sm font-semibold">
-          {userInfo.firstName} {userInfo.lastName}
-        </p>
-        <p className="text-xs text-slate-400">{userInfo.email}</p>
-      </div>
     </div>
   );
 
