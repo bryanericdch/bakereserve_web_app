@@ -790,7 +790,7 @@ const AdminDashboard = () => {
               </IconButton>
             </DialogTitle>
             <DialogContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 mt-3.5">
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">
                     Customer Info
