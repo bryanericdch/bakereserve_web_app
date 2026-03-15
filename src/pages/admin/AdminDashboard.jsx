@@ -36,12 +36,16 @@ const AdminDashboard = () => {
   const [statusTab, setStatusTab] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+
+  // --- NEW: Custom Stats Period States ---
   const [statsPeriod, setStatsPeriod] = useState("month");
+  const [selectedCustomMonth, setSelectedCustomMonth] = useState("");
+  const [selectedCustomYear, setSelectedCustomYear] = useState("");
+
   const [rankSort, setRankSort] = useState("highest");
 
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Custom Cancel/Reject Modal State
   const [confirmCancel, setConfirmCancel] = useState({
     open: false,
     id: null,
@@ -174,8 +178,11 @@ const AdminDashboard = () => {
 
   const getStats = () => {
     const now = new Date();
+
+    // --- UPDATED: Enhanced Filter Logic for Custom Dates ---
     const filteredByTime = orders.filter((order) => {
       const d = new Date(order.createdAt);
+
       if (statsPeriod === "day") return d.toDateString() === now.toDateString();
       if (statsPeriod === "month")
         return (
@@ -183,6 +190,19 @@ const AdminDashboard = () => {
           d.getFullYear() === now.getFullYear()
         );
       if (statsPeriod === "year") return d.getFullYear() === now.getFullYear();
+
+      if (statsPeriod === "custom_month" && selectedCustomMonth) {
+        const [yyyy, mm] = selectedCustomMonth.split("-");
+        return (
+          d.getFullYear() === parseInt(yyyy) &&
+          d.getMonth() === parseInt(mm) - 1
+        );
+      }
+
+      if (statsPeriod === "custom_year" && selectedCustomYear) {
+        return d.getFullYear() === parseInt(selectedCustomYear);
+      }
+
       return true;
     });
 
@@ -439,7 +459,6 @@ const AdminDashboard = () => {
                         </button>
                       )}
 
-                      {/* Cancel / Reject Button for ALL Active Stages */}
                       {[
                         "pending",
                         "approved",
@@ -495,7 +514,8 @@ const AdminDashboard = () => {
       {/* STATISTICS VIEW */}
       {mainView === "stats" && (
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center mb-8">
+          {/* --- UPDATED: Date Filter Controls --- */}
+          <div className="flex flex-col md:flex-row justify-center md:justify-between items-center mb-8 gap-4">
             <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
               {["day", "month", "year"].map((period) => (
                 <button
@@ -507,7 +527,38 @@ const AdminDashboard = () => {
                 </button>
               ))}
             </div>
+
+            <div className="flex gap-3">
+              <TextField
+                type="month"
+                label="Specific Month"
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                value={
+                  statsPeriod === "custom_month" ? selectedCustomMonth : ""
+                }
+                onChange={(e) => {
+                  setStatsPeriod("custom_month");
+                  setSelectedCustomMonth(e.target.value);
+                }}
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+              <TextField
+                type="number"
+                label="Specific Year"
+                size="small"
+                placeholder="e.g. 2026"
+                InputLabelProps={{ shrink: true }}
+                value={statsPeriod === "custom_year" ? selectedCustomYear : ""}
+                onChange={(e) => {
+                  setStatsPeriod("custom_year");
+                  setSelectedCustomYear(e.target.value);
+                }}
+                sx={{ bgcolor: "white", borderRadius: 1, width: "120px" }}
+              />
+            </div>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
               <div className="absolute -right-4 -top-4 p-4 opacity-5">
@@ -551,7 +602,7 @@ const AdminDashboard = () => {
                 <CancelOutlinedIcon style={{ fontSize: 100, color: "red" }} />
               </div>
               <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">
-                Rejected
+                Rejected / Cancelled
               </p>
               <h2 className="text-3xl font-black text-gray-800">
                 {statsData.rejected}
@@ -709,7 +760,7 @@ const AdminDashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* --- ORDER DETAILS MODAL (Now includes Contact & Address) --- */}
+      {/* --- ORDER DETAILS MODAL --- */}
       <Dialog
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}

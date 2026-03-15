@@ -109,7 +109,7 @@ const ProductDetailModal = ({
                 fontWeight: "bold",
               }}
             >
-              {product.countInStock > 0 ? "Reserve Now" : "Fully Booked"}
+              {product.countInStock > 0 ? "Order Now" : "Fully Booked"}
             </Button>
           )}
         </div>

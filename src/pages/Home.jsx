@@ -258,7 +258,7 @@ const Home = () => {
                         disabled={product.countInStock === 0}
                         className={`w-full ${product.countInStock > 0 ? "bg-red-500 hover:bg-red-600 text-white shadow-md rounded" : "bg-gray-200 text-gray-400 cursor-not-allowed"} font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all`}
                       >
-                        Personalize
+                        Order
                       </button>
                     ) : (
                       <button

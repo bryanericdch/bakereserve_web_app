@@ -22,7 +22,7 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle className="text-center font-bold pb-0">
-        Reserve Item
+        Order Item
       </DialogTitle>
       <DialogContent className="flex flex-col items-center pt-4">
         <img
@@ -67,7 +67,7 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
           variant="contained"
           sx={{ bgcolor: "#EF4444", fontWeight: "bold" }}
         >
-          Reserve {quantity}{" "}
+          Order {quantity}{" "}
           {product.category === "bakery" ? "Pack(s)" : "Item(s)"}
         </Button>
       </DialogActions>
