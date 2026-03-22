@@ -19,7 +19,7 @@ const Footer = () => {
           <div className="flex flex-col space-y-3 md:items-end">
             <h3 className="font-bold text-gray-800">Contact Us</h3>
             <p className="text-sm text-gray-500">
-              📍 Dagupan City, Philippines
+              📍 Arellano St, Dagupan City, Pangasinan
             </p>
             <p className="text-sm text-gray-500">📞 +63 945 755 5693</p>
             <p className="text-sm text-gray-500">✉️ bakereserve@gmail.com</p>
