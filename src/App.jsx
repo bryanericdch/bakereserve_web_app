@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import AppRoutes from "./routes/AppRoutes";
 import "./index.css";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
   const navigate = useNavigate();
