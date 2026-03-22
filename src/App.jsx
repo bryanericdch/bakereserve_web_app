@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./index.css";
 import AppRoutes from "./routes/AppRoutes";
+import "./index.css";
 
 function App() {
   const navigate = useNavigate();
@@ -12,17 +12,19 @@ function App() {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (
+        // Check if the error exists, is 401 or 403, and contains the word "banned"
+        const isBanned =
           error.response &&
           (error.response.status === 401 || error.response.status === 403) &&
-          error.response.data.message === "Account banned"
-        ) {
+          error.response.data?.message?.toLowerCase().includes("banned");
+
+        if (isBanned) {
           // Alert the user, wipe their session, and kick them to login
           alert(
             "Your account has been banned due to policy violations. You have been logged out.",
           );
           localStorage.removeItem("userInfo");
-          navigate("/auth");
+          navigate("/auth", { replace: true });
         }
         return Promise.reject(error);
       },
