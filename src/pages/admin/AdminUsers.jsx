@@ -166,7 +166,7 @@ const AdminUsers = () => {
                           <EditOutlinedIcon />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete User Account" arrow>
+                      <Tooltip title="Remove User Account" arrow>
                         <IconButton
                           color="error"
                           onClick={() =>
