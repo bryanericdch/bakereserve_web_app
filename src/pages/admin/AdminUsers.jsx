@@ -10,6 +10,7 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
 
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -157,20 +158,24 @@ const AdminUsers = () => {
                       />
                     </td>
                     <td className="p-4 text-right space-x-1">
-                      <IconButton
-                        color="primary"
-                        onClick={() => openStatusModal(user)}
-                      >
-                        <EditOutlinedIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() =>
-                          setDeleteModal({ open: true, userId: user._id })
-                        }
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
+                      <Tooltip title="Edit User Status" arrow>
+                        <IconButton
+                          color="primary"
+                          onClick={() => openStatusModal(user)}
+                        >
+                          <EditOutlinedIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete User Account" arrow>
+                        <IconButton
+                          color="error"
+                          onClick={() =>
+                            setDeleteModal({ open: true, userId: user._id })
+                          }
+                        >
+                          <DeleteOutlineIcon />
+                        </IconButton>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))}

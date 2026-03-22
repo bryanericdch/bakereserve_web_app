@@ -19,6 +19,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloseIcon from "@mui/icons-material/Close";
 import GridViewIcon from "@mui/icons-material/GridView";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import Tooltip from "@mui/material/Tooltip";
 
 const API_URL = "https://bakereserve-api.onrender.com/api";
 
@@ -377,26 +378,30 @@ const AdminProducts = () => {
                     </div>
                   </td>
                   <td className="p-4 text-right space-x-1">
-                    <IconButton
-                      color="primary"
-                      onClick={() => openEditModal(product)}
-                      disabled={deletingId === product._id}
-                    >
-                      <EditOutlinedIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() =>
-                        setConfirmDelete({ open: true, id: product._id })
-                      }
-                      disabled={deletingId === product._id}
-                    >
-                      {deletingId === product._id ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <DeleteOutlineIcon />
-                      )}
-                    </IconButton>
+                    <Tooltip title="Edit Product" arrow>
+                      <IconButton
+                        color="primary"
+                        onClick={() => openEditModal(product)}
+                        disabled={deletingId === product._id}
+                      >
+                        <EditOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Remove Product" arrow>
+                      <IconButton
+                        color="error"
+                        onClick={() =>
+                          setConfirmDelete({ open: true, id: product._id })
+                        }
+                        disabled={deletingId === product._id}
+                      >
+                        {deletingId === product._id ? (
+                          <CircularProgress size={20} color="inherit" />
+                        ) : (
+                          <DeleteOutlineIcon />
+                        )}
+                      </IconButton>
+                    </Tooltip>
                   </td>
                 </tr>
               ))}

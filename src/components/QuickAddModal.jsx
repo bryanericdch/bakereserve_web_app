@@ -32,7 +32,11 @@ const QuickAddModal = ({ open, onClose, product, onConfirm }) => {
         />
         <h3 className="font-bold text-gray-800">{product.name}</h3>
         <p className="text-red-500 font-bold mb-4">
-          ₱ {product.price}{" "}
+          ₱{" "}
+          {Number(product.price).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
           {product.category === "bakery" && (
             <span className="text-xs text-gray-400">/ pack</span>
           )}

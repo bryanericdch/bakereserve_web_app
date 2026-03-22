@@ -233,7 +233,11 @@ const Home = () => {
                   <div className="mt-auto flex items-center justify-between mb-5">
                     <div>
                       <span className="text-red-500 font-bold text-xl">
-                        ₱ {product.price}
+                        ₱{" "}
+                        {Number(product.price).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </span>
                       {product.category === "bakery" && (
                         <span className="text-[10px] text-gray-500 block">

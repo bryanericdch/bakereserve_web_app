@@ -84,7 +84,11 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
               {product.subCategory || "Custom Cake"}
             </p>
             <p className="font-bold text-amber-600">
-              Base Price: ₱ {product.price}
+              Base Price: ₱{" "}
+              {Number(product.price).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </p>
           </div>
         </div>
@@ -214,7 +218,12 @@ const CakeCustomizationModal = ({ open, onClose, product, onAddToCart }) => {
             "&:hover": { bgcolor: "#B45309" },
           }}
         >
-          Add to Cart - ₱ {product.price}*
+          Add to Cart - ₱{" "}
+          {Number(product.price).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+          *
         </Button>
       </DialogActions>
     </Dialog>

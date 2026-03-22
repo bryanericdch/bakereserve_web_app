@@ -151,7 +151,11 @@ const ProductDetails = () => {
             </div>
 
             <p className="text-3xl font-black text-red-500 mb-4">
-              ₱ {displayPrice}
+              ₱{" "}
+              {Number(displayPrice).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
               {product.category === "bakery" && (
                 <span className="text-sm text-gray-500 font-normal ml-2">
                   / pack of {product.piecesPerPack || 1}

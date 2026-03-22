@@ -177,7 +177,11 @@ const Orders = () => {
                         Total Amount
                       </p>
                       <p className="font-bold text-gray-900">
-                        ₱ {order.totalPrice.toFixed(2)}
+                        ₱{" "}
+                        {Number(order.totalPrice).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </p>
                     </div>
                     <Chip
@@ -241,7 +245,14 @@ const Orders = () => {
                           )}
                         </div>
                         <span className="font-medium text-sm text-gray-600">
-                          ₱ {(item.price * item.quantity).toFixed(2)}
+                          ₱{" "}
+                          {Number(item.price * item.quantity).toLocaleString(
+                            "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
                         </span>
                       </div>
                     ))}

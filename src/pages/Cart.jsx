@@ -282,7 +282,11 @@ const Cart = () => {
                     </div>
 
                     <p className="text-red-500 font-bold text-sm mt-1">
-                      ₱ {item.price.toFixed(2)}
+                      ₱{" "}
+                      {Number(item.price).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
 
@@ -415,7 +419,11 @@ const Cart = () => {
                   Total ({selectedItems.length} items)
                 </span>
                 <span className="text-red-500 font-bold text-xl">
-                  ₱ {calculateTotal().toFixed(2)}
+                  ₱{" "}
+                  {Number(calculateTotal()).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
 

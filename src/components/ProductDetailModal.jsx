@@ -60,7 +60,13 @@ const ProductDetailModal = ({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-red-500">₱ {product.price}</p>
+            <p className="text-2xl font-bold text-red-500">
+              ₱{" "}
+              {Number(product.price).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
             {!isCake && (
               <p className="text-xs text-gray-500">
                 / pack of {product.piecesPerPack || 1}

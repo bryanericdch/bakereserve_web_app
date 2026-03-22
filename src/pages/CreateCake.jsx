@@ -261,7 +261,11 @@ const CreateCake = () => {
                   Total Price
                 </span>
                 <span className="text-2xl font-black text-amber-600">
-                  ₱ {displayPrice}
+                  ₱{" "}
+                  {Number(displayPrice).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             )}

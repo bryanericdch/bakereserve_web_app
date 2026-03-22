@@ -75,13 +75,23 @@ const AdminLayout = () => {
         );
       }
       setNotifAnchor(null);
+
+      // Route based on Notification Keywords
+      const title = notification.title?.toLowerCase() || "";
       if (
-        notification.title &&
-        notification.title.includes("High Cancellation Alert")
+        title.includes("alert") ||
+        title.includes("user") ||
+        title.includes("warning")
       ) {
         navigate("/admin/users");
+      } else if (
+        title.includes("product") ||
+        title.includes("stock") ||
+        title.includes("inventory")
+      ) {
+        navigate("/admin/products");
       } else {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard"); // Default goes to Orders
       }
     } catch (error) {
       console.error("Failed to process notification click", error);
