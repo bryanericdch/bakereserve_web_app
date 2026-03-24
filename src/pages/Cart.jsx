@@ -38,6 +38,8 @@ const Cart = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [eWalletType, setEWalletType] = useState("gcash");
 
+  const today = new Date().toISOString().split("T")[0];
+
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -343,6 +345,7 @@ const Cart = () => {
                   size="small"
                   label="Pickup Date"
                   InputLabelProps={{ shrink: true }}
+                  min={today}
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
                 />
